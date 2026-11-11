@@ -18,11 +18,11 @@ public sealed class FishingGame : MonoBehaviour {
     Font font; AudioSource effects,voice; Dictionary<string,AudioClip> clips=new Dictionary<string,AudioClip>();
     HookState hookState; Target caught;
     float width=720,height=1280,seconds=120,stageElapsed,nextSpawn,hookX,hookY,grip,castWind,lastTap=-10,toastUntil,toastStart,buttonPulse,windClock,voiceCooldown;
-    int stage=1,coins,score,best,wind,toastPriority; bool playing,paused,newRecord,low30,low10,warning,muted;
+    int stage=1,coins,score,best,wind,toastPriority; bool playing,paused,newRecord,low30,low10,warning,muted,testMode;
     const float DockY=245, FloorY=1080;
     Color cream=new Color(1,.95f,.76f),gold=new Color(1,.78f,.26f);
     public bool IsPlaying=>playing; public int Score=>score;
-    void Awake(){Application.targetFrameRate=60;Screen.orientation=ScreenOrientation.Portrait; best=PlayerPrefs.GetInt("balik.best",0);muted=PlayerPrefs.GetInt("balik.muted",0)==1;Build();ShowHome();}
+    void Awake(){testMode=Array.Exists(Environment.GetCommandLineArgs(),a=>a.StartsWith("--balik-"));if(testMode)Application.runInBackground=true;Application.targetFrameRate=60;Screen.orientation=ScreenOrientation.Portrait; best=PlayerPrefs.GetInt("balik.best",0);muted=PlayerPrefs.GetInt("balik.muted",0)==1;Build();ShowHome();}
     RectTransform Node(string name,Transform parent,float x,float y,float w,float h){var g=new GameObject(name,typeof(RectTransform));g.transform.SetParent(parent,false);var r=g.GetComponent<RectTransform>();r.anchorMin=r.anchorMax=new Vector2(0,1);r.pivot=new Vector2(.5f,.5f);r.anchoredPosition=new Vector2(x,-y);r.sizeDelta=new Vector2(w,h);return r;}
     Image Pic(string name,Transform parent,Sprite s,float x,float y,float w,float h,Color? color=null){var r=Node(name,parent,x,y,w,h);var i=r.gameObject.AddComponent<Image>();i.sprite=s;i.color=color??Color.white;i.raycastTarget=false;return i;}
     Text Label(string name,Transform parent,string value,float x,float y,float w,float h,int size,Color? color=null){var r=Node(name,parent,x,y,w,h);var t=r.gameObject.AddComponent<Text>();t.font=font;t.text=value;t.fontSize=size;t.fontStyle=FontStyle.Bold;t.alignment=TextAnchor.MiddleCenter;t.color=color??cream;t.raycastTarget=false;t.horizontalOverflow=HorizontalWrapMode.Wrap;t.verticalOverflow=VerticalWrapMode.Truncate;var sh=r.gameObject.AddComponent<Shadow>();sh.effectColor=new Color(.02f,.08f,.10f,.85f);sh.effectDistance=new Vector2(1,-3);return t;}
@@ -77,7 +77,7 @@ public sealed class FishingGame : MonoBehaviour {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         var args=Environment.GetCommandLineArgs();
         if(Array.IndexOf(args,"--balik-smoke")>=0){yield return null;yield return SmokeTest();yield return new WaitForEndOfFrame();Application.Quit(0);}
-        if(Array.IndexOf(args,"--balik-preview")>=0){StartRun();yield return new WaitForSeconds(1);paused=true;ScreenCapture.CaptureScreenshot("/tmp/balik-phone.png");}
+        if(Array.IndexOf(args,"--balik-preview")>=0){StartRun();yield return new WaitForSeconds(1);paused=true;ScreenCapture.CaptureScreenshot("/tmp/balik-phone.png");yield return new WaitForSeconds(.5f);Application.Quit(0);}
 #endif
         yield break;
     }
@@ -97,7 +97,7 @@ public sealed class FishingGame : MonoBehaviour {
     void ToggleSound(){muted=!muted;PlayerPrefs.SetInt("balik.muted",muted?1:0);PlayerPrefs.Save();if(muted){voice.Stop();effects.Stop();}}
     void TogglePause(){if(!playing)return;paused=!paused;if(!paused){overlay.gameObject.SetActive(false);return;}ClearOverlay();Scrim();Label("Pause title",overlay,"MOLA ZAMANI",width/2,430,width-40,100,47,gold);Label("Pause copy",overlay,"Deniz seni bekler.\nSüren durduruldu.",width/2,550,width-50,100,28);Button("DEVAM ET",overlay,width/2,710,330,90,TogglePause);Button(muted?"SESİ AÇ":"SESİ KAPAT",overlay,width/2,825,330,75,()=>{ToggleSound();paused=false;TogglePause();});}
     void OnApplicationPause(bool p){if(p&&playing&&!paused)TogglePause();SaveBest();}
-    void OnApplicationFocus(bool focus){if(!focus&&playing&&!paused)TogglePause();}
+    void OnApplicationFocus(bool focus){if(!testMode&&!focus&&playing&&!paused)TogglePause();}
     void OnApplicationQuit(){SaveBest();}
     void SaveBest(){if(score>best){best=score;PlayerPrefs.SetInt("balik.best",best);PlayerPrefs.Save();}}
     void ChooseWind(){wind=Random.Range(-1,2);windClock=Random.Range(4f,8f);windText.text=wind<0?"← RÜZGÂR":wind>0?"RÜZGÂR →":"RÜZGÂR • SAKİN";}
