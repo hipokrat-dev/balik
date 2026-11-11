@@ -15,7 +15,7 @@ public sealed class FishingGame : MonoBehaviour {
     RectTransform root,world,hud,overlay,boat,rod,hook,line,action,gripBar,gripFill,toastRoot;
     Text timerText,coinText,stageText,scoreText,actionText,hintText,toastText,gripText,recordText;
     Image[] pieces=new Image[5]; Image buttonImage;
-    Font font; AudioSource effects,voice,ambience; Dictionary<string,AudioClip> clips=new Dictionary<string,AudioClip>();
+    Font font; AudioSource effects,voice,ambience,music; Dictionary<string,AudioClip> clips=new Dictionary<string,AudioClip>();
     HookState hookState; Target caught;
     float trafficRemaining; bool crowded;
     float width=720,height=1280,seconds=120,stageElapsed,nextSpawn,hookX,hookY,grip,castWind,lastTap=-10,toastUntil,toastStart,buttonPulse,windClock,voiceCooldown;
@@ -70,6 +70,7 @@ public sealed class FishingGame : MonoBehaviour {
         new GameObject("EventSystem",typeof(EventSystem),typeof(StandaloneInputModule));
         effects=gameObject.AddComponent<AudioSource>();voice=gameObject.AddComponent<AudioSource>();effects.volume=.35f;voice.volume=.85f;
         ambience=gameObject.AddComponent<AudioSource>();ambience.clip=Resources.Load<AudioClip>("Audio/waves");ambience.loop=true;ambience.volume=.55f;ambience.mute=muted;ambience.Play();
+        music=gameObject.AddComponent<AudioSource>();music.clip=Resources.Load<AudioClip>("Audio/background-music");music.loop=true;music.volume=.3f;music.mute=muted;music.Play();
         overlay=Node("Screens",root,0,0,width,height);overlay.pivot=new Vector2(0,1);
         for(int i=0;i<3;i++)Spawn(true);
         hookX=(width*.31f+200);hookY=DockY;UpdateHook();
@@ -94,10 +95,10 @@ public sealed class FishingGame : MonoBehaviour {
         Label("Guide",overlay,"Tek düğme: SAL / ÇEK\nBüyük avlarda art arda dokun!",width/2,1123,width-40,72,22);
         Button(muted?"SES KAPALI":"SES AÇIK",overlay,width/2,1212,235,58,()=>{ToggleSound();ShowHome();});
     }
-    public void StartRun(){foreach(var t in targets)Destroy(t.rect.gameObject);targets.Clear();seconds=120;score=coins=0;stage=1;stageElapsed=0;schedule.Reset();newRecord=low30=low10=paused=false;playing=true;hookState=HookState.Ready;caught=null;hookX=(width*.31f+200);hookY=DockY;crowded=false;trafficRemaining=Random.Range(8f,14f);nextSpawn=Random.Range(2f,4f);toastPriority=0;toastUntil=0;overlay.gameObject.SetActive(false);hud.gameObject.SetActive(true);ChooseWind();for(int i=0;i<5;i++)Spawn(true);UpdateHud();Notify("RASTGELE!",gold,2,1,"start");}
-    void ToggleSound(){muted=!muted;PlayerPrefs.SetInt("balik.muted",muted?1:0);PlayerPrefs.Save();ambience.mute=muted;if(muted){voice.Stop();effects.Stop();}}
+    public void StartRun(){foreach(var t in targets)Destroy(t.rect.gameObject);targets.Clear();seconds=120;score=coins=0;stage=1;stageElapsed=0;schedule.Reset();newRecord=low30=low10=paused=false;playing=true;hookState=HookState.Ready;caught=null;hookX=(width*.31f+200);hookY=DockY;crowded=false;trafficRemaining=Random.Range(8f,14f);nextSpawn=Random.Range(2f,4f);toastPriority=0;toastUntil=0;overlay.gameObject.SetActive(false);hud.gameObject.SetActive(true);ChooseWind();for(int i=0;i<5;i++)Spawn(true);EnsureFishPresence();UpdateHud();Notify("RASTGELE!",gold,2,1,"start");}
+    void ToggleSound(){muted=!muted;PlayerPrefs.SetInt("balik.muted",muted?1:0);PlayerPrefs.Save();ambience.mute=muted;music.mute=muted;if(muted){voice.Stop();effects.Stop();}}
     void TogglePause(){if(!playing)return;paused=!paused;if(!paused){overlay.gameObject.SetActive(false);return;}ClearOverlay();Scrim();Label("Pause title",overlay,"MOLA ZAMANI",width/2,430,width-40,100,47,gold);Label("Pause copy",overlay,"Deniz seni bekler.\nSüren durduruldu.",width/2,550,width-50,100,28);Button("DEVAM ET",overlay,width/2,710,330,90,TogglePause);Button(muted?"SESİ AÇ":"SESİ KAPAT",overlay,width/2,825,330,75,()=>{ToggleSound();paused=false;TogglePause();});}
-    void OnApplicationPause(bool p){if(p&&playing&&!paused)TogglePause();if(ambience!=null){if(p)ambience.Pause();else ambience.UnPause();}SaveBest();}
+    void OnApplicationPause(bool p){if(p&&playing&&!paused)TogglePause();if(ambience!=null){if(p)ambience.Pause();else ambience.UnPause();}if(music!=null){if(p)music.Pause();else music.UnPause();}SaveBest();}
     void OnApplicationFocus(bool focus){if(!testMode&&!focus&&playing&&!paused)TogglePause();}
     void OnApplicationQuit(){SaveBest();}
     void SaveBest(){if(score>best){best=score;PlayerPrefs.SetInt("balik.best",best);PlayerPrefs.Save();}}
@@ -129,11 +130,22 @@ public sealed class FishingGame : MonoBehaviour {
             if(grip<=0)Escape();}
         TryCatch();
         if(caught!=null){caught.x=hookX;caught.y=hookY+14;caught.rect.anchoredPosition=new Vector2(caught.x,-caught.y);caught.rect.localRotation=Quaternion.Euler(0,0,Mathf.Sin(Time.time*12)*7);}
-        if(hookY<=DockY&&hookState!=HookState.Ready)Land();UpdateHook();UpdateHud();
+        if(hookY<=DockY&&hookState!=HookState.Ready)Land();EnsureFishPresence();UpdateHook();UpdateHud();
         buttonPulse=Mathf.Max(0,buttonPulse-dt*5);action.localScale=Vector3.one*(1-buttonPulse*.09f);
         if(Time.time<toastUntil){float t=Time.time-toastStart;float s=1+Mathf.Sin(Mathf.Min(1,t*4)*Mathf.PI)*.17f;toastRoot.localScale=Vector3.one*s;toastText.color=new Color(toastText.color.r,toastText.color.g,toastText.color.b,Mathf.Clamp01((toastUntil-Time.time)*3));}else toastText.text="";
     }
-    void Spawn(bool initial){var d=FishingRules.Pick(rng);bool right=Random.value>.5f;float scale=Random.Range(.85f,1.16f),w=d.width*scale;var t=new Target{def=d,x=initial?Random.Range(30,width-30):(right?-w:width+w),y=Random.Range(d.depthMin,d.depthMax),speed=Random.Range(25,70)*(right?1:-1),phase=Random.Range(0f,6f),scale=scale,ttl=1000};t.rect=Pic(d.name,world,SeaArt.Crop(d.sheet,d.x,d.y,d.w,d.h),t.x,t.y,w,w*d.h/d.w).rectTransform;t.rect.localScale=new Vector3(right?1:-1,1,1);targets.Add(t);hook.SetAsLastSibling();}
+    void Spawn(bool initial,bool reserveFish=false){var d=FishingRules.Pick(rng);if(reserveFish)while(d.sheet!="fish")d=FishingRules.Pick(rng);bool right=Random.value>.5f;float scale=Random.Range(.85f,1.16f),w=d.width*scale;var t=new Target{def=d,x=initial?Random.Range(30,width-30):reserveFish?(right?0:width):(right?-w:width+w),y=Random.Range(d.depthMin,d.depthMax),speed=Random.Range(25,70)*(right?1:-1),phase=Random.Range(0f,6f),scale=scale,ttl=1000};t.rect=Pic(d.name,world,SeaArt.Crop(d.sheet,d.x,d.y,d.w,d.h),t.x,t.y,w,w*d.h/d.w).rectTransform;t.rect.localScale=new Vector3(right?1:-1,1,1);targets.Add(t);hook.SetAsLastSibling();}
+    void EnsureFishPresence(){
+        // Keep two free fish in view, replacing outgoing fish before they leave.
+        // Trash, maps, escaped and hooked targets do not satisfy this reserve.
+        int remaining=0;
+        foreach(var t in targets){
+            if(t==caught||t.escaped||t.def.sheet!="fish"||t.ttl<=2)continue;
+            float futureX=t.x+t.speed*2,halfWidth=t.rect.rect.width*.5f;
+            if(t.x+halfWidth>0&&t.x-halfWidth<width&&futureX+halfWidth>0&&futureX-halfWidth<width)remaining++;
+        }
+        while(remaining++<2)Spawn(false,true);
+    }
     void SpawnMap(){
         var d=new CatchDefinition("map","Harita parçası","",0,0,1,1,65,180,.4f,550,750,0);
         // Enter fully outside the screen and cross with the current; never teleport into play.
@@ -191,8 +203,17 @@ public sealed class FishingGame : MonoBehaviour {
             float halfCrossing=(width+120)/Mathf.Abs(map.speed)/2;AnimateTargets(halfCrossing);
             if(map.x<0||map.x>width||!targets.Contains(map))throw new Exception("Map did not drift through screen");
             AnimateTargets(halfCrossing+1);if(targets.Contains(map))throw new Exception("Map did not leave screen");}
+        EnsureFishPresence();
+        for(int tick=0;tick<2400;tick++){
+            AnimateTargets(.05f);
+            if(tick%41==0){var removed=targets.Find(a=>a.def.sheet=="fish");if(removed!=null){targets.Remove(removed);Destroy(removed.rect.gameObject);}}
+            EnsureFishPresence();
+            int visible=targets.FindAll(a=>a.def.sheet=="fish"&&!a.escaped&&a!=caught&&a.x+a.rect.rect.width*.5f>0&&a.x-a.rect.rect.width*.5f<width).Count;
+            if(visible<2)throw new Exception("Fish reserve became empty");
+        }
+        foreach(var actor in targets)Destroy(actor.rect.gameObject);targets.Clear();
         var d=FishingRules.Catalog[6];var t=new Target{def=d,x=hookX,y=700,scale=1,ttl=100,rect=Pic("Test shark",world,SeaArt.Crop(d.sheet,d.x,d.y,d.w,d.h),hookX,700,200,90).rectTransform};targets.Add(t);hookY=700;hookState=HookState.Reeling;TryCatch();if(caught!=null)throw new Exception("Empty returning hook caught a target");hookState=HookState.Sinking;TryCatch();if(caught!=t)throw new Exception("Descending hook missed contact");
-        foreach(float angle in new[]{-8f,0f,8f}){boat.localRotation=Quaternion.Euler(0,0,angle);UpdateHook();Vector2 endpoint=world.InverseTransformPoint(line.TransformPoint(new Vector3(0,-line.rect.height/2,0)));if(Vector2.Distance(endpoint,RodTip())>.1f)throw new Exception("Line detached from rod");}if(hookState!=HookState.Fighting)throw new Exception("Heavy catch");float oldY=hookY;lastTap=-10;Press();if(hookY>=oldY)throw new Exception("Tap progress");Escape();if(caught!=null)throw new Exception("Escape");hookY=DockY;Land();for(int i=0;i<5;i++)AdvanceStage();if(playing)throw new Exception("Map completion");Debug.Log("BALIK_PLAYMODE_PASS: cast, reel, no return catches, descending contact, map enters and exits with current in both directions, rod attachment at three angles, heavy tap, escape, five-piece victory");ShowHome();}
+        foreach(float angle in new[]{-8f,0f,8f}){boat.localRotation=Quaternion.Euler(0,0,angle);UpdateHook();Vector2 endpoint=world.InverseTransformPoint(line.TransformPoint(new Vector3(0,-line.rect.height/2,0)));if(Vector2.Distance(endpoint,RodTip())>.1f)throw new Exception("Line detached from rod");}if(hookState!=HookState.Fighting)throw new Exception("Heavy catch");float oldY=hookY;lastTap=-10;Press();if(hookY>=oldY)throw new Exception("Tap progress");Escape();if(caught!=null)throw new Exception("Escape");hookY=DockY;Land();for(int i=0;i<5;i++)AdvanceStage();if(playing)throw new Exception("Map completion");Debug.Log("BALIK_PLAYMODE_PASS: continuous fish presence across 120 simulated seconds and repeated removals, cast, reel, no return catches, descending contact, map enters and exits with current in both directions, rod attachment at three angles, heavy tap, escape, five-piece victory");ShowHome();}
 #endif
 }
 }

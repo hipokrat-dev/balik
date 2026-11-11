@@ -40,3 +40,7 @@ Unity menüsü **Balık → Kural Testleri** saf kuralları doğrular. **Mac Tes
 Development Mac çalıştırıcısına `--balik-smoke -batchmode -logFile <dosya>` verilirse atış, geri çekiş, ağır av, kaçış ve beş parça zafer kontrolü yürütülür. `--balik-preview` oyun ekranı görüntüsünü `/tmp/balik-phone.png` yoluna alır.
 
 Bu sürüm oynanabilir ilk prototiptir. Gerçek cihaz performans testi ve oyun ekonomisi ayarı gerekir. iOS derlemesi için iOS Build Support ve Apple imzalama kurulmalıdır; bu makinede iOS modülü bulunmuyor.
+
+Arka plan müziği: kullanıcının sağladığı `Untitled.wav`, `Assets/Resources/Audio/background-music.wav` olarak eklendi. Stereo müzik %30 seviyesinde döngüde çalar; ses tercihini ve uygulamanın arka plana alınmasını takip eder. Mobilde bellek kullanımını azaltmak için sıkıştırılmış akış (streaming) olarak içe aktarılır.
+
+Seyrek dönemlerde de en az iki serbest normal balık görünür kalır. Çıkışa yaklaşan veya yakalanan balıklar için kenardan yeni balık girer; çöp ve harita bu alt sınıra sayılmaz.
