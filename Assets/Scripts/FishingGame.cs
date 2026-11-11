@@ -79,6 +79,12 @@ public sealed class FishingGame : MonoBehaviour {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         var args=Environment.GetCommandLineArgs();
         if(Array.IndexOf(args,"--balik-smoke")>=0){yield return null;yield return SmokeTest();yield return new WaitForEndOfFrame();Application.Quit(0);}
+        if(Array.IndexOf(args,"--balik-mouth-preview")>=0){
+            StartRun();var d=FishingRules.Catalog[6];
+            var fish=new Target{def=d,x=width/2,y=600,scale=1,ttl=100,rect=Pic("Preview shark",world,SeaArt.Crop(d.sheet,d.x,d.y,d.w,d.h),width/2,600,250,250*d.h/d.w).rectTransform};
+            targets.Add(fish);hookX=width/2;hookY=570;Catch(fish);actionText.text="ÇEK";paused=true;UpdateHook();
+            yield return new WaitForEndOfFrame();ScreenCapture.CaptureScreenshot("/tmp/balik-mouth.png");yield return new WaitForSeconds(.5f);Application.Quit(0);
+        }
         if(Array.IndexOf(args,"--balik-preview")>=0){StartRun();yield return new WaitForSeconds(1);paused=true;ScreenCapture.CaptureScreenshot("/tmp/balik-phone.png");yield return new WaitForSeconds(.5f);Application.Quit(0);}
 #endif
         yield break;
@@ -129,7 +135,7 @@ public sealed class FishingGame : MonoBehaviour {
             if(grip<.3f){gripText.text="KAÇIYOR!";gripText.color=new Color(1,.35f,.15f);if(!warning){warning=true;PlayVoice("escaping");}}else{warning=false;gripText.text="ÇEK! ÇEK! ÇEK!";gripText.color=cream;}
             if(grip<=0)Escape();}
         TryCatch();
-        if(caught!=null){caught.x=hookX;caught.y=hookY+14;caught.rect.anchoredPosition=new Vector2(caught.x,-caught.y);caught.rect.localRotation=Quaternion.Euler(0,0,Mathf.Sin(Time.time*12)*7);}
+        if(caught!=null){caught.phase+=dt*14;PositionCaught();}
         if(hookY<=DockY&&hookState!=HookState.Ready)Land();EnsureFishPresence();UpdateHook();UpdateHud();
         buttonPulse=Mathf.Max(0,buttonPulse-dt*5);action.localScale=Vector3.one*(1-buttonPulse*.09f);
         if(Time.time<toastUntil){float t=Time.time-toastStart;float s=1+Mathf.Sin(Mathf.Min(1,t*4)*Mathf.PI)*.17f;toastRoot.localScale=Vector3.one*s;toastText.color=new Color(toastText.color.r,toastText.color.g,toastText.color.b,Mathf.Clamp01((toastUntil-Time.time)*3));}else toastText.text="";
@@ -159,9 +165,9 @@ public sealed class FishingGame : MonoBehaviour {
         targets.Add(t);
     }
     void AnimateTargets(float dt){if(paused)return;for(int i=targets.Count-1;i>=0;i--){var t=targets[i];if(t==caught)continue;t.x+=t.speed*dt;t.phase+=dt*2;t.ttl-=dt;t.rect.anchoredPosition=new Vector2(t.x,-t.y+Mathf.Sin(t.phase)*5);t.rect.localRotation=Quaternion.Euler(0,0,Mathf.Sin(t.phase)*2);if(t.x< -(t.map?60:350)||t.x>width+(t.map?60:350)||t.ttl<=0){Destroy(t.rect.gameObject);targets.RemoveAt(i);}}}
-    void Catch(Target t){caught=t;grip=1;warning=false;lastTap=Time.time;hookState=t.def.Heavy?HookState.Fighting:HookState.Reeling;t.rect.SetAsLastSibling();gripBar.gameObject.SetActive(t.def.Heavy);hintText.text=t.def.Heavy?"HIZLI HIZLI DOKUN!":"AVIN YUKARI GELİYOR";Notify(t.def.Heavy?"ÇEK! ÇEK! ÇEK!":"YAKALADIN!",cream,1.2f,1,null);PlayWaterEffect();}
-    void Escape(){var t=caught;caught=null;t.escaped=true;t.speed=Mathf.Sign(t.speed==0?1:t.speed)*260;t.ttl=2;hookState=HookState.Reeling;gripBar.gameObject.SetActive(false);Notify("KAÇTI!",new Color(1,.5f,.3f),1.8f,2,"escaped");hintText.text="BOŞ OLTAYI ÇEK";}
-    void Land(){bool advance=false;if(caught!=null){var d=caught.def;int value=Mathf.RoundToInt(d.value*caught.scale);float reward=Mathf.Max(1,value/45f);float added=FishingRules.RewardTime(seconds,reward)-seconds;seconds+=added;coins+=value;score+=value;advance=caught.map||coins>=FishingRules.Goal(stage);if(caught.map)schedule.Collect();
+    void Catch(Target t){caught=t;t.phase=0;PositionCaught();hook.SetAsLastSibling();grip=1;warning=false;lastTap=Time.time;hookState=t.def.Heavy?HookState.Fighting:HookState.Reeling;t.rect.SetAsLastSibling();hook.SetAsLastSibling();gripBar.gameObject.SetActive(t.def.Heavy);hintText.text=t.def.Heavy?"HIZLI HIZLI DOKUN!":"AVIN YUKARI GELİYOR";Notify(t.def.Heavy?"ÇEK! ÇEK! ÇEK!":"YAKALADIN!",cream,1.2f,1,null);PlayWaterEffect();}
+    void Escape(){var t=caught;caught=null;t.rect.localRotation=Quaternion.identity;t.escaped=true;t.speed=Mathf.Sign(t.speed==0?1:t.speed)*260;t.ttl=2;hookState=HookState.Reeling;gripBar.gameObject.SetActive(false);Notify("KAÇTI!",new Color(1,.5f,.3f),1.8f,2,"escaped");hintText.text="BOŞ OLTAYI ÇEK";}
+    void Land(){bool advance=false;if(caught!=null){var d=caught.def;int value=Mathf.RoundToInt(d.value*caught.scale);float reward=value<=0?0:Mathf.Max(1,value/45f);float added=FishingRules.RewardTime(seconds,reward)-seconds;seconds+=added;coins+=value;score+=value;advance=caught.map||coins>=FishingRules.Goal(stage);if(caught.map)schedule.Collect();
             StartCoroutine(RewardFloat("+"+value+"   +"+added.ToString("0.#")+" SN",new Vector2(hookX,DockY+50)));
             if(!newRecord&&score>best){newRecord=true;Notify("YENİ REKOR!",gold,2,3,"record");}
             else Notify(d.id=="can"?"TENEKE ÇIKTI!":d.id=="sock"?"BU DA NE?":d.id=="shoe"?"TEKİ NEREDE?":d.id=="bag"?"ÇÖP ÇIKTI!":d.Heavy?"BÜYÜK VURGUN!":"GÜZEL AV!",gold,1.7f,1,d.Heavy?"big":"reward");
@@ -174,11 +180,54 @@ public sealed class FishingGame : MonoBehaviour {
         Vector3 local=new Vector3(((1402f-750)/680-.5f)*rod.rect.width,(.5f-(549f-525)/485)*rod.rect.height,0);
         return world.InverseTransformPoint(rod.TransformPoint(local));
     }
-    void LateUpdate(){if(hook!=null)UpdateHook();}
+    void LateUpdate(){if(hook!=null){UpdateHook();if(caught!=null)PositionCaught();}}
+    Vector2 MouthLocal(Target t){
+        // Mouth landmarks in the original sprite sheets (top-left pixel coordinates).
+        Vector2 pixel;
+        switch(t.def.id){
+            case "gold":pixel=new Vector2(540,198);break;
+            case "clown":pixel=new Vector2(1250,196);break;
+            case "stripe":pixel=new Vector2(617,478);break;
+            case "purple":pixel=new Vector2(1337,472);break;
+            case "tuna":pixel=new Vector2(753,811);break;
+            case "snapper":pixel=new Vector2(1475,817);break;
+            case "shark":pixel=new Vector2(1060,361);break;
+            case "octopus":pixel=new Vector2(655,930);break;
+            case "sword":pixel=new Vector2(810,228);break;
+            case "whale":pixel=new Vector2(1150,550);break;
+            case "orca":pixel=new Vector2(1030,1125);break;
+            default:return Vector2.zero;
+        }
+        return new Vector2(((pixel.x-t.def.x)/t.def.w-.5f)*t.rect.rect.width,
+            (.5f-(pixel.y-t.def.y)/t.def.h)*t.rect.rect.height);
+    }
+    Vector2 MouthPosition(Target t)=>world.InverseTransformPoint(t.rect.TransformPoint(MouthLocal(t)));
+    Vector2 HookPoint()=>new Vector2(hookX-9,-hookY+1);
+    void PositionCaught(){
+        var t=caught;
+        if(t.def.IsCreature){
+            float facing=Mathf.Sign(t.rect.localScale.x);
+            float hang=t.def.id=="octopus"?0:70*facing;
+            t.rect.localRotation=Quaternion.Euler(0,0,hang+Mathf.Sin(t.phase)*18+Mathf.Sin(t.phase*2.3f)*5);
+            Vector2 offset=world.InverseTransformVector(t.rect.TransformVector(MouthLocal(t)));
+            t.rect.anchoredPosition=HookPoint()-offset;
+        }else{
+            t.rect.localRotation=Quaternion.Euler(0,0,Mathf.Sin(t.phase*.5f)*5);
+            t.rect.anchoredPosition=new Vector2(hookX,-hookY-14);
+        }
+        t.x=t.rect.anchoredPosition.x;t.y=-t.rect.anchoredPosition.y;
+    }
     void TryCatch(){
-        // Contact only catches while descending, never on an empty return trip.
+        // Only the descending hook tip can catch; creatures require head/mouth contact.
         if(caught!=null||hookState!=HookState.Sinking)return;
-        foreach(var t in targets){if(t.ttl<=0||t.escaped)continue;Vector2 p=t.rect.anchoredPosition;float dx=(hookX-p.x)/(t.rect.sizeDelta.x*.35f+10),dy=(hookY+p.y)/(t.rect.sizeDelta.y*.32f+12);if(dx*dx+dy*dy<1){Catch(t);break;}}
+        foreach(var t in targets){
+            if(t.ttl<=0||t.escaped)continue;
+            Vector2 p=t.def.IsCreature?MouthPosition(t):t.rect.anchoredPosition;
+            float rx=t.def.IsCreature?Mathf.Clamp(t.rect.rect.width*.12f,14,30):t.rect.rect.width*.35f+10;
+            float ry=t.def.IsCreature?Mathf.Clamp(t.rect.rect.height*.22f,14,30):t.rect.rect.height*.32f+12;
+            Vector2 delta=HookPoint()-p;
+            if(delta.x*delta.x/(rx*rx)+delta.y*delta.y/(ry*ry)<1){Catch(t);break;}
+        }
     }
     void PlayWaterEffect(){if(!muted){var clip=Resources.Load<AudioClip>("Audio/water-catch");if(clip!=null)effects.PlayOneShot(clip,1.3f);}}
     void UpdateHook(){
@@ -187,7 +236,7 @@ public sealed class FishingGame : MonoBehaviour {
         Vector2 tip=RodTip();
         Vector2 end=world.InverseTransformPoint(hook.TransformPoint(new Vector3(8,18,0)));
         Vector2 delta=end-tip;line.anchoredPosition=(tip+end)*.5f;line.sizeDelta=new Vector2(1.7f,delta.magnitude);line.localRotation=Quaternion.Euler(0,0,Mathf.Atan2(delta.y,delta.x)*Mathf.Rad2Deg-90);
-        if(caught!=null&&caught.def.Heavy){gripBar.anchoredPosition=new Vector2(Mathf.Clamp(hookX,140,width-140),-Mathf.Clamp(hookY+90,340,1020));gripFill.sizeDelta=new Vector2(205*grip,12);gripFill.GetComponent<Image>().color=grip<.3f?new Color(1,.25f,.12f):new Color(.2f,1,.7f);}}
+        if(caught!=null&&caught.def.Heavy){gripBar.anchoredPosition=new Vector2(Mathf.Clamp(hookX,140,width-140),-Mathf.Clamp(hookY-75,340,1020));gripFill.sizeDelta=new Vector2(205*grip,12);gripFill.GetComponent<Image>().color=grip<.3f?new Color(1,.25f,.12f):new Color(.2f,1,.7f);}}
     void UpdateHud(){int s=Mathf.CeilToInt(seconds);timerText.text=$"{s/60:00}:{s%60:00}";timerText.color=seconds<=10?Color.Lerp(cream,new Color(1,.25f,.12f),.5f+.5f*Mathf.Sin(Time.time*8)):cream;coinText.text=coins+" / "+FishingRules.Goal(stage);scoreText.text="SKOR "+score;recordText.text="REKOR "+best;stageText.text="AŞAMA\n"+stage;for(int i=0;i<5;i++)pieces[i].color=i<stage-1?Color.white:new Color(.32f,.35f,.35f);}
     void Notify(string text,Color color,float duration,int priority,string audio=null){if(Time.time<toastUntil&&priority<toastPriority)return;toastPriority=priority;toastStart=Time.time;toastUntil=Time.time+duration;toastText.text=text;toastText.color=color;if(audio!=null)PlayVoice(audio);}
     IEnumerator RewardFloat(string text,Vector2 p){var label=Label("Reward",hud,text,p.x,p.y,360,60,29,new Color(.6f,1,.65f));for(float t=0;t<1.4f;t+=Time.deltaTime){if(paused){yield return null;continue;}label.rectTransform.anchoredPosition=new Vector2(Mathf.Lerp(p.x,width/2,t/1.4f),-Mathf.Lerp(p.y,90,t/1.4f));yield return null;}Destroy(label.gameObject);}
@@ -212,8 +261,26 @@ public sealed class FishingGame : MonoBehaviour {
             if(visible<2)throw new Exception("Fish reserve became empty");
         }
         foreach(var actor in targets)Destroy(actor.rect.gameObject);targets.Clear();
-        var d=FishingRules.Catalog[6];var t=new Target{def=d,x=hookX,y=700,scale=1,ttl=100,rect=Pic("Test shark",world,SeaArt.Crop(d.sheet,d.x,d.y,d.w,d.h),hookX,700,200,90).rectTransform};targets.Add(t);hookY=700;hookState=HookState.Reeling;TryCatch();if(caught!=null)throw new Exception("Empty returning hook caught a target");hookState=HookState.Sinking;TryCatch();if(caught!=t)throw new Exception("Descending hook missed contact");
-        foreach(float angle in new[]{-8f,0f,8f}){boat.localRotation=Quaternion.Euler(0,0,angle);UpdateHook();Vector2 endpoint=world.InverseTransformPoint(line.TransformPoint(new Vector3(0,-line.rect.height/2,0)));if(Vector2.Distance(endpoint,RodTip())>.1f)throw new Exception("Line detached from rod");}if(hookState!=HookState.Fighting)throw new Exception("Heavy catch");float oldY=hookY;lastTap=-10;Press();if(hookY>=oldY)throw new Exception("Tap progress");Escape();if(caught!=null)throw new Exception("Escape");hookY=DockY;Land();for(int i=0;i<5;i++)AdvanceStage();if(playing)throw new Exception("Map completion");Debug.Log("BALIK_PLAYMODE_PASS: continuous fish presence across 120 simulated seconds and repeated removals, cast, reel, no return catches, descending contact, map enters and exits with current in both directions, rod attachment at three angles, heavy tap, escape, five-piece victory");ShowHome();}
+        foreach(var definition in FishingRules.Catalog){
+            if(definition.IsCreature){foreach(int facing in new[]{-1,1}){
+                var fish=new Target{def=definition,x=width/2,y=700,scale=1,ttl=100,
+                    rect=Pic("Mouth test",world,SeaArt.Crop(definition.sheet,definition.x,definition.y,definition.w,definition.h),width/2,700,definition.width,definition.width*definition.h/definition.w).rectTransform};
+                fish.rect.localScale=new Vector3(facing,1,1);targets.Add(fish);
+                Vector2 tail=world.InverseTransformPoint(fish.rect.TransformPoint(new Vector2(-fish.rect.rect.width*.45f,0)));
+                hookX=tail.x+9;hookY=1-tail.y;hookState=HookState.Sinking;TryCatch();
+                if(caught!=null)throw new Exception("Tail contact caught "+definition.id);
+                Vector2 mouthPoint=MouthPosition(fish);hookX=mouthPoint.x+9;hookY=1-mouthPoint.y;TryCatch();
+                if(caught!=fish)throw new Exception("Mouth contact missed "+definition.id);
+                for(int frame=0;frame<20;frame++){fish.phase=frame*.3f;PositionCaught();if(Vector2.Distance(MouthPosition(fish),HookPoint())>.1f)throw new Exception("Mouth detached "+definition.id);}
+                caught=null;targets.Remove(fish);Destroy(fish.rect.gameObject);
+            }}else if(definition.sheet=="trash"){
+                var trash=new Target{def=definition,scale=1,ttl=100,rect=Pic("Trash test",world,null,200,700,60,60).rectTransform};targets.Add(trash);
+                int oldScore=score,oldCoins=coins;float oldTime=seconds;Catch(trash);Land();
+                if(score!=oldScore||coins!=oldCoins||seconds!=oldTime)throw new Exception("Trash awarded reward "+definition.id);
+            }
+        }
+        var d=FishingRules.Catalog[6];var t=new Target{def=d,x=hookX,y=700,scale=1,ttl=100,rect=Pic("Test shark",world,SeaArt.Crop(d.sheet,d.x,d.y,d.w,d.h),hookX,700,200,90).rectTransform};targets.Add(t);Vector2 mouth=MouthPosition(t);hookX=mouth.x+9;hookY=1-mouth.y;hookState=HookState.Reeling;TryCatch();if(caught!=null)throw new Exception("Empty returning hook caught a target");hookState=HookState.Sinking;TryCatch();if(caught!=t)throw new Exception("Descending hook missed contact");
+        foreach(float angle in new[]{-8f,0f,8f}){boat.localRotation=Quaternion.Euler(0,0,angle);UpdateHook();Vector2 endpoint=world.InverseTransformPoint(line.TransformPoint(new Vector3(0,-line.rect.height/2,0)));if(Vector2.Distance(endpoint,RodTip())>.1f)throw new Exception("Line detached from rod");}if(hookState!=HookState.Fighting)throw new Exception("Heavy catch");float oldY=hookY;lastTap=-10;Press();if(hookY>=oldY)throw new Exception("Tap progress");Escape();if(caught!=null)throw new Exception("Escape");hookY=DockY;Land();for(int i=0;i<5;i++)AdvanceStage();if(playing)throw new Exception("Map completion");Debug.Log("BALIK_PLAYMODE_PASS: zero trash reward, all creature mouths and tail rejection in both directions, attachment during thrashing, continuous fish presence across 120 simulated seconds and repeated removals, cast, reel, no return catches, descending contact, map enters and exits with current in both directions, rod attachment at three angles, heavy tap, escape, five-piece victory");ShowHome();}
 #endif
 }
 }

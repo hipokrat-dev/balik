@@ -44,3 +44,5 @@ Bu sürüm oynanabilir ilk prototiptir. Gerçek cihaz performans testi ve oyun e
 Arka plan müziği: kullanıcının sağladığı `Untitled.wav`, `Assets/Resources/Audio/background-music.wav` olarak eklendi. Stereo müzik %30 seviyesinde döngüde çalar; ses tercihini ve uygulamanın arka plana alınmasını takip eder. Mobilde bellek kullanımını azaltmak için sıkıştırılmış akış (streaming) olarak içe aktarılır.
 
 Seyrek dönemlerde de en az iki serbest normal balık görünür kalır. Çıkışa yaklaşan veya yakalanan balıklar için kenardan yeni balık girer; çöp ve harita bu alt sınıra sayılmaz.
+
+Çöpler (konserve, çorap, ayakkabı, poşet) 0 puan ve 0 saniye verir. Canlılar yalnızca baş/ağız çevresinden yakalanır; iğne ağız noktasına sabitlenir ve gövde bu noktanın etrafında çırpınır.

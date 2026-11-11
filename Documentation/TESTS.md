@@ -34,3 +34,7 @@ BALIK_MAC_BUILD_PASS
 
 - Kullanıcının `Untitled.wav` müziği stereo streaming klip olarak eklendi; kaynak dosya birebir karşılaştırıldı. Mac derlemesi ve oyun döngüsü testi geçti.
 - Balık alt sınırı: normal zamanlı doğumlar olmadan 120 saniyelik simülasyonda ve tekrarlanan balık kaldırmalarında en az iki serbest balığın görünür kalması doğrulandı (`BALIK_PLAYMODE_PASS`).
+
+- Çöplerin tamamı için iniş/teslim sonrası skor, aşama parası ve süre değişmediği doğrulandı.
+- Her canlı türünde iki yüzme yönünde kuyruk teması reddedildi, ağız teması yakaladı; 20 farklı çırpınma açısında ağız–iğne mesafesi 0.1 UI biriminin altında kaldı. Diğer oyun döngüsü testleri geçti.
+- `--balik-mouth-preview` ile telefon görünümünde ağızdan asılı köpek balığı kontrol edildi. Çekme göstergesi balığın gövdesini kapatmamak için iğnenin üstüne taşındı.

@@ -23,7 +23,7 @@ public static class BuildGame {
         void Check(bool condition,string message){if(!condition)throw new Exception(message);}
         var s=new MapSchedule();Check(!s.Poll(17),"early map");Check(s.Poll(18),"first map");Check(!s.Poll(20),"duplicate map");Check(s.Poll(48),"second map");Check(!s.Poll(99),"third map");s.Reset();s.Collect();Check(!s.Poll(100),"collected map returned");
         Check(FishingRules.RewardTime(179,20)==180,"time cap");Check(FishingRules.GripAfter(.1f,10,2)==0,"escape grip");Check(FishingRules.Goal(2)>FishingRules.Goal(1),"stage progression");
-        var rng=new System.Random(123);var seen=new System.Collections.Generic.HashSet<string>();for(int i=0;i<10000;i++)seen.Add(FishingRules.Pick(rng).id);Check(seen.Count==FishingRules.Catalog.Length,"missing spawn kind");foreach(var d in FishingRules.Catalog){Check(d.Seconds>0,"zero reward");Check(d.depthMin<d.depthMax,"depth");}
+        var rng=new System.Random(123);var seen=new System.Collections.Generic.HashSet<string>();for(int i=0;i<10000;i++)seen.Add(FishingRules.Pick(rng).id);Check(seen.Count==FishingRules.Catalog.Length,"missing spawn kind");foreach(var d in FishingRules.Catalog){Check(d.sheet=="trash"?d.value==0&&d.Seconds==0:d.Seconds>0,"reward policy");Check(d.depthMin<d.depthMax,"depth");}
         Debug.Log("BALIK_RULES_PASS: two map opportunities, collection, time cap, escape, progression, all spawn species");
     }
     [MenuItem("Balık/Mac Test Sürümü Oluştur")]

@@ -3,7 +3,8 @@ using System.Collections.Generic;
 namespace Balik {
     [Serializable] public class CatchDefinition {
         public string id, name, sheet; public float x,y,w,h,width,depthMin,depthMax,weight,difficulty; public int value;
-        public float Seconds => Math.Max(1f, value / 45f);
+        public bool IsCreature => sheet=="fish"||sheet=="boss"||sheet=="giants";
+        public float Seconds => value<=0?0:Math.Max(1f, value / 45f);
         public bool Heavy => difficulty >= 1;
         public CatchDefinition(string id,string name,string sheet,float x,float y,float w,float h,float width,int value,float difficulty,float min,float max,float weight) {
             this.id=id;this.name=name;this.sheet=sheet;this.x=x;this.y=y;this.w=w;this.h=h;this.width=width;this.value=value;this.difficulty=difficulty;depthMin=min;depthMax=max;this.weight=weight;
@@ -27,10 +28,10 @@ namespace Balik {
             new CatchDefinition("sword","Kılıç balığı","giants",95,10,1060,360,230,400,1.35f,640,920,3),
             new CatchDefinition("whale","Mavi balina","giants",0,440,1198,370,295,600,2f,880,1060,1.3f),
             new CatchDefinition("orca","Orka","giants",55,825,1020,480,240,500,1.7f,790,1030,2),
-            new CatchDefinition("can","Konserve kutusu","trash",80,5,460,585,52,12,0,410,780,4),
-            new CatchDefinition("sock","Eski çorap","trash",800,0,400,605,42,8,0,350,800,3),
-            new CatchDefinition("shoe","Eski ayakkabı","trash",10,700,655,430,83,18,.25f,640,990,3),
-            new CatchDefinition("bag","Çöp poşeti","trash",735,610,545,580,74,25,.6f,620,1020,3),
+            new CatchDefinition("can","Konserve kutusu","trash",80,5,460,585,52,0,0,410,780,4),
+            new CatchDefinition("sock","Eski çorap","trash",800,0,400,605,42,0,0,350,800,3),
+            new CatchDefinition("shoe","Eski ayakkabı","trash",10,700,655,430,83,0,.25f,640,990,3),
+            new CatchDefinition("bag","Çöp poşeti","trash",735,610,545,580,74,0,.6f,620,1020,3),
             new CatchDefinition("chest","Hazine sandığı","chest",65,30,1270,1010,140,650,1.8f,910,1050,2),
         };
         public static CatchDefinition Pick(Random random) {
