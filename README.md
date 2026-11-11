@@ -12,8 +12,8 @@ Sahne `FishingGame` tarafından çalışma anında oluşturulur; Play dışında
 
 - 120 saniye ile başlar. Tek düğme: yukarıdayken **SAL**, su altındayken **ÇEK**.
 - Rüzgâr atışta hafif sola / düz / sağa sapma verir. Oyuncu yönlendirmez.
-- Kanca ilk değdiği hedefi yakalar; boş suya inebilir, boş geri çekilebilir.
-- Tür, boyut, zaman, yön, hız ve sürü sayısı ağırlıklı rastgeledir. Derinlik havuzları farklıdır.
+- Kanca yalnızca aşağı inerken ilk değdiği hedefi yakalar. Boş yukarı çekişte hiçbir hedef yakalanmaz. Misina olta ucundaki halkayı ve kancanın gözünü takip eder.
+- Tür, boyut, zaman, yön, hız ve sürü sayısı ağırlıklı rastgeledir. 12–22 sn sakin dönemlerde 5–11 sn aralıklarla en fazla 3; 7–12 sn yoğun dönemlerde 1,8–3,5 sn aralıklarla en fazla 8 hedef bulunur. Başlangıçta 2–3 hedef vardır; boş atışlar normaldir.
 - Büyük avlarda sık dokunmak gerekir. Çekiş göstergesi tükenirse av kaçar; boş kanca geri çekilir.
 - Balık, sandık ve dört çöp türü tekneye teslim edildiğinde değer/45 saniye kazandırır (en az 1 sn). Sayaç 180 saniye ile sınırlıdır.
 - Her aşamada aynı harita parçası 18. ve 48. saniyelerde en fazla iki kez, 14 saniyeliğine görünür. Yakalanırsa veya aşama para hedefi tamamlanırsa bir parça kazanılır ve aşama geçilir. Beş parça oyunu kazandırır.
@@ -24,7 +24,7 @@ Sahne `FishingGame` tarafından çalışma anında oluşturulur; Play dışında
 
 Kullanıcının sağladığı 6 nesne sayfası `Assets/Resources/Art` içindedir. Orijinaller değiştirilmez; nesneler Sprite dikdörtgenleriyle ayrılır. Deniz arka planı kullanıcının ekran referansından Imagegen ile temizlenmiştir. UI çerçeveleri ve kanca Unity'de üretilir.
 
-15 Türkçe uyarı ElevenLabs, **Adam – Deep, Professional and Serious**, Eleven v3 ile üretildi. Kaynak kayıt ve kesim zamanları `Documentation/Audio` içindedir. Sesler çevrimdışı çalışır; API anahtarı gerekmez. Dokunma/ödül tonları yerel sentezlenir.
+15 Türkçe uyarı kaydı ElevenLabs, **Adam – Deep, Professional and Serious**, Eleven v3 ile üretildi. Kaynak kayıt ve kesim zamanları `Documentation/Audio` içindedir. Sesler çevrimdışı çalışır; API anahtarı gerekmez. SAL/ÇEK konuşmaları devre dışıdır. Yakalama için kısa su efekti ve kesintisiz dalga ambiyansı yerel olarak sentezlenir; kaynak üretim betiği `Tools/make_water_audio.py` içindedir. Diğer olay konuşmaları korunur. Gerçekçi parşömen harita görseli Imagegen ile üretilmiştir.
 
 ## Ayarlar ve kod
 

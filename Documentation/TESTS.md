@@ -17,3 +17,11 @@ BALIK_RULES_PASS: two map opportunities, collection, time cap, escape, progressi
 BALIK_PLAYMODE_PASS: cast, reel, heavy tap, escape, five-piece victory
 BALIK_MAC_BUILD_PASS
 ```
+
+## Oynanış revizyonu
+
+- Yukarı dönen boş kancanın çakışan hedefi yakalamadığı, aynı hedefin aşağı inişte yakalandığı doğrulandı.
+- Misinanın olta ucu bağlantısı -8°, 0°, +8° tekne dönüşlerinde 0,1 UI biriminden küçük hata ile doğrulandı.
+- Güncel Mac görüntü testi hatasız; telefon ekranı `Previews/revised-phone.png`.
+- SAL/ÇEK konuşmaları devre dışı; yerel sentezlenen dalga döngüsü ve su efekti eklendi.
+- Gerçekçi parşömen sprite ve sakin/yoğun balık geçiş dönemleri eklendi.
