@@ -38,3 +38,5 @@ BALIK_MAC_BUILD_PASS
 - Çöplerin tamamı için iniş/teslim sonrası skor, aşama parası ve süre değişmediği doğrulandı.
 - Her canlı türünde iki yüzme yönünde kuyruk teması reddedildi, ağız teması yakaladı; 20 farklı çırpınma açısında ağız–iğne mesafesi 0.1 UI biriminin altında kaldı. Diğer oyun döngüsü testleri geçti.
 - `--balik-mouth-preview` ile telefon görünümünde ağızdan asılı köpek balığı kontrol edildi. Çekme göstergesi balığın gövdesini kapatmamak için iğnenin üstüne taşındı.
+
+- Android yükleme uyumluluğu: önceki APK yalnızca arm64-v8a içeriyordu. Çalıştığı bildirilen Ayşe APK'sı arm64-v8a ve armeabi-v7a içeriyor. Balık 1.0.1 (versionCode 2) her iki ABI ile yeniden derlendi; aapt ile ikisi doğrulandı ve apksigner imza doğrulaması geçti. Her iki oyun Android API 26 ve üzerini gerektiriyor. Telefon üzerinde kurulum sonucu henüz doğrulanmadı.

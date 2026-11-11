@@ -35,7 +35,7 @@ Kullanıcının sağladığı 6 nesne sayfası `Assets/Resources/Art` içindedir
 
 ## Derleme ve doğrulama
 
-Unity menüsü **Balık → Kural Testleri** saf kuralları doğrular. **Mac Test Sürümü Oluştur** ve **Android APK Oluştur** çıktıları `Builds/` altına yazar. Android için kurulu SDK/NDK ve ARM64 IL2CPP kullanılır. `Projeyi Hazırla` başlangıç sahnesini yeniden oluşturur; elle sahne düzenlediysen önce ayrı kaydet.
+Unity menüsü **Balık → Kural Testleri** saf kuralları doğrular. **Mac Test Sürümü Oluştur** ve **Android APK Oluştur** çıktıları `Builds/` altına yazar. Android için kurulu SDK/NDK ve ARMv7 + ARM64 IL2CPP kullanılır. `Projeyi Hazırla` başlangıç sahnesini yeniden oluşturur; elle sahne düzenlediysen önce ayrı kaydet.
 
 Development Mac çalıştırıcısına `--balik-smoke -batchmode -logFile <dosya>` verilirse atış, geri çekiş, ağır av, kaçış ve beş parça zafer kontrolü yürütülür. `--balik-preview` oyun ekranı görüntüsünü `/tmp/balik-phone.png` yoluna alır.
 
