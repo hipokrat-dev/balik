@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 namespace Balik {
+[RequireComponent(typeof(CanvasRenderer))]
 public class HookGraphic : MaskableGraphic {
     protected override void OnPopulateMesh(VertexHelper vh){vh.Clear();
         void Segment(Vector2 a,Vector2 b,float thickness){Vector2 n=new Vector2(-(b-a).y,(b-a).x).normalized*thickness/2;int start=vh.currentVertCount;vh.AddVert(a-n,color,Vector2.zero);vh.AddVert(a+n,color,Vector2.zero);vh.AddVert(b+n,color,Vector2.zero);vh.AddVert(b-n,color,Vector2.zero);vh.AddTriangle(start,start+1,start+2);vh.AddTriangle(start,start+2,start+3);}
