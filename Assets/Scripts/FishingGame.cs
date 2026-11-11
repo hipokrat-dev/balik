@@ -13,7 +13,7 @@ public sealed class FishingGame : MonoBehaviour {
     readonly List<Target> targets=new List<Target>(); readonly List<Bubble> bubbles=new List<Bubble>();
     readonly System.Random rng=new System.Random(); readonly MapSchedule schedule=new MapSchedule();
     RectTransform root,world,hud,overlay,boat,rod,hook,line,action,gripBar,gripFill,toastRoot;
-    Text timerText,coinText,stageText,scoreText,windText,actionText,hintText,toastText,gripText,recordText;
+    Text timerText,coinText,stageText,scoreText,actionText,hintText,toastText,gripText,recordText;
     Image[] pieces=new Image[5]; Image buttonImage;
     Font font; AudioSource effects,voice,ambience; Dictionary<string,AudioClip> clips=new Dictionary<string,AudioClip>();
     HookState hookState; Target caught;
@@ -53,7 +53,6 @@ public sealed class FishingGame : MonoBehaviour {
         stageText=Label("Stage",hud,"AŞAMA 1",width*.76f,top,width*.15f,65,19);
         scoreText=Label("Score",hud,"SKOR 0",112,top+60,210,36,20);
         recordText=Label("Record",hud,"REKOR "+best,width-133,top+60,245,36,18);
-        windText=Label("Wind",hud,"RÜZGÂR →",width*.72f,186,190,35,18);
         Label("Depth shallow",world,"10 m",width-34,380,65,26,16,new Color(.7f,1,1,.48f));
         Label("Depth mid",world,"30 m",width-34,660,65,26,16,new Color(.7f,1,1,.40f));
         Label("Depth deep",world,"60 m",width-34,950,65,26,16,new Color(.7f,1,1,.35f));
@@ -95,14 +94,14 @@ public sealed class FishingGame : MonoBehaviour {
         Label("Guide",overlay,"Tek düğme: SAL / ÇEK\nBüyük avlarda art arda dokun!",width/2,1123,width-40,72,22);
         Button(muted?"SES KAPALI":"SES AÇIK",overlay,width/2,1212,235,58,()=>{ToggleSound();ShowHome();});
     }
-    public void StartRun(){foreach(var t in targets)Destroy(t.rect.gameObject);targets.Clear();seconds=120;score=coins=0;stage=1;stageElapsed=0;schedule.Reset();newRecord=low30=low10=paused=false;playing=true;hookState=HookState.Ready;caught=null;hookX=(width*.31f+200);hookY=DockY;crowded=false;trafficRemaining=Random.Range(12f,22f);nextSpawn=Random.Range(5f,10f);toastPriority=0;toastUntil=0;overlay.gameObject.SetActive(false);hud.gameObject.SetActive(true);ChooseWind();for(int i=0;i<Random.Range(2,4);i++)Spawn(true);UpdateHud();Notify("RASTGELE!",gold,2,1,"start");}
+    public void StartRun(){foreach(var t in targets)Destroy(t.rect.gameObject);targets.Clear();seconds=120;score=coins=0;stage=1;stageElapsed=0;schedule.Reset();newRecord=low30=low10=paused=false;playing=true;hookState=HookState.Ready;caught=null;hookX=(width*.31f+200);hookY=DockY;crowded=false;trafficRemaining=Random.Range(8f,14f);nextSpawn=Random.Range(2f,4f);toastPriority=0;toastUntil=0;overlay.gameObject.SetActive(false);hud.gameObject.SetActive(true);ChooseWind();for(int i=0;i<5;i++)Spawn(true);UpdateHud();Notify("RASTGELE!",gold,2,1,"start");}
     void ToggleSound(){muted=!muted;PlayerPrefs.SetInt("balik.muted",muted?1:0);PlayerPrefs.Save();ambience.mute=muted;if(muted){voice.Stop();effects.Stop();}}
     void TogglePause(){if(!playing)return;paused=!paused;if(!paused){overlay.gameObject.SetActive(false);return;}ClearOverlay();Scrim();Label("Pause title",overlay,"MOLA ZAMANI",width/2,430,width-40,100,47,gold);Label("Pause copy",overlay,"Deniz seni bekler.\nSüren durduruldu.",width/2,550,width-50,100,28);Button("DEVAM ET",overlay,width/2,710,330,90,TogglePause);Button(muted?"SESİ AÇ":"SESİ KAPAT",overlay,width/2,825,330,75,()=>{ToggleSound();paused=false;TogglePause();});}
     void OnApplicationPause(bool p){if(p&&playing&&!paused)TogglePause();if(ambience!=null){if(p)ambience.Pause();else ambience.UnPause();}SaveBest();}
     void OnApplicationFocus(bool focus){if(!testMode&&!focus&&playing&&!paused)TogglePause();}
     void OnApplicationQuit(){SaveBest();}
     void SaveBest(){if(score>best){best=score;PlayerPrefs.SetInt("balik.best",best);PlayerPrefs.Save();}}
-    void ChooseWind(){wind=Random.Range(-1,2);windClock=Random.Range(4f,8f);windText.text=wind<0?"← RÜZGÂR":wind>0?"RÜZGÂR →":"RÜZGÂR • SAKİN";}
+    void ChooseWind(){wind=Random.Range(-1,2);windClock=Random.Range(4f,8f);}
     public void Press(){if(!playing||paused)return;buttonPulse=1;Tone(560,.055f);
         if(hookState==HookState.Ready){castWind=wind;hookState=HookState.Sinking;hookX=(width*.31f+200);hookY=DockY;hintText.text="İSTEDİĞİN AN ÇEK";PlayWaterEffect();}
         else if(hookState==HookState.Fighting){if(Time.time-lastTap<.055f)return;lastTap=Time.time;grip=Mathf.Min(1,grip+.115f);hookY-=20f/(.75f+caught.def.difficulty*.25f);hintText.text="ÇEK! ÇEK! ÇEK!";}
@@ -118,9 +117,9 @@ public sealed class FishingGame : MonoBehaviour {
         if(seconds<=10&&!low10){low10=true;Notify("SON 10 SANİYE!",new Color(1,.3f,.2f),2,4,"last10");}
         if(seconds>35)low30=false;if(seconds>15)low10=false;
         trafficRemaining-=dt;
-        if(trafficRemaining<=0){crowded=!crowded;trafficRemaining=crowded?Random.Range(7f,12f):Random.Range(12f,22f);nextSpawn=crowded?Random.Range(1f,2.5f):Random.Range(5f,11f);}
+        if(trafficRemaining<=0){crowded=!crowded;trafficRemaining=crowded?Random.Range(8f,13f):Random.Range(8f,14f);nextSpawn=crowded?Random.Range(1f,2f):Random.Range(3f,5f);}
         nextSpawn-=dt;
-        if(nextSpawn<=0){int limit=crowded?8:3;int count=crowded&&Random.value<.3f?2:1;for(int i=0;i<count&&targets.Count<limit;i++)Spawn(false);nextSpawn=crowded?Random.Range(1.8f,3.5f):Random.Range(5f,11f);}
+        if(nextSpawn<=0){int limit=crowded?10:5;int count=crowded&&Random.value<.3f?2:1;for(int i=0;i<count&&targets.Count<limit;i++)Spawn(false);nextSpawn=crowded?Random.Range(1.3f,2.6f):Random.Range(3f,5f);}
         if(schedule.Poll(stageElapsed)){SpawnMap();Notify("HARİTA PARÇASI!",gold,2,2,"map");}
         AnimateTargets(dt);
         if(hookState==HookState.Sinking){hookY=Mathf.Min(FloorY,hookY+155*dt);hookX=Mathf.Clamp(hookX+castWind*21*dt,70,width-70);if(hookY>=FloorY)hintText.text="DİBE ULAŞTIN • ÇEK";}
@@ -135,8 +134,19 @@ public sealed class FishingGame : MonoBehaviour {
         if(Time.time<toastUntil){float t=Time.time-toastStart;float s=1+Mathf.Sin(Mathf.Min(1,t*4)*Mathf.PI)*.17f;toastRoot.localScale=Vector3.one*s;toastText.color=new Color(toastText.color.r,toastText.color.g,toastText.color.b,Mathf.Clamp01((toastUntil-Time.time)*3));}else toastText.text="";
     }
     void Spawn(bool initial){var d=FishingRules.Pick(rng);bool right=Random.value>.5f;float scale=Random.Range(.85f,1.16f),w=d.width*scale;var t=new Target{def=d,x=initial?Random.Range(30,width-30):(right?-w:width+w),y=Random.Range(d.depthMin,d.depthMax),speed=Random.Range(25,70)*(right?1:-1),phase=Random.Range(0f,6f),scale=scale,ttl=1000};t.rect=Pic(d.name,world,SeaArt.Crop(d.sheet,d.x,d.y,d.w,d.h),t.x,t.y,w,w*d.h/d.w).rectTransform;t.rect.localScale=new Vector3(right?1:-1,1,1);targets.Add(t);hook.SetAsLastSibling();}
-    void SpawnMap(){var d=new CatchDefinition("map","Harita parçası","",0,0,1,1,65,180,.4f,550,750,0);var t=new Target{def=d,map=true,x=(width*.31f+200)+Random.Range(-80f,80f),y=Random.Range(510f,770f),speed=Random.Range(-8f,8f),phase=0,ttl=14,scale=1};t.rect=Pic("Catchable parchment map",world,SeaArt.Whole("map-fragment"),t.x,t.y,86,90).rectTransform;targets.Add(t);}
-    void AnimateTargets(float dt){if(paused)return;for(int i=targets.Count-1;i>=0;i--){var t=targets[i];if(t==caught)continue;t.x+=t.speed*dt;t.phase+=dt*2;t.ttl-=dt;t.rect.anchoredPosition=new Vector2(t.x,-t.y+Mathf.Sin(t.phase)*5);t.rect.localRotation=Quaternion.Euler(0,0,Mathf.Sin(t.phase)*2);if(t.x< -350||t.x>width+350||t.ttl<=0){Destroy(t.rect.gameObject);targets.RemoveAt(i);}}}
+    void SpawnMap(){
+        var d=new CatchDefinition("map","Harita parçası","",0,0,1,1,65,180,.4f,550,750,0);
+        // Enter fully outside the screen and cross with the current; never teleport into play.
+        int direction=wind==0?(Random.value<.5f?-1:1):wind;
+        const float margin=60;
+        float crossingSeconds=Random.Range(18f,22f);
+        var t=new Target{def=d,map=true,x=direction>0?-margin:width+margin,
+            y=Random.Range(510f,770f),speed=direction*(width+2*margin)/crossingSeconds,
+            phase=Random.Range(0f,6f),ttl=crossingSeconds+1,scale=1};
+        t.rect=Pic("Catchable parchment map",world,SeaArt.Whole("map-fragment"),t.x,t.y,86,90).rectTransform;
+        targets.Add(t);
+    }
+    void AnimateTargets(float dt){if(paused)return;for(int i=targets.Count-1;i>=0;i--){var t=targets[i];if(t==caught)continue;t.x+=t.speed*dt;t.phase+=dt*2;t.ttl-=dt;t.rect.anchoredPosition=new Vector2(t.x,-t.y+Mathf.Sin(t.phase)*5);t.rect.localRotation=Quaternion.Euler(0,0,Mathf.Sin(t.phase)*2);if(t.x< -(t.map?60:350)||t.x>width+(t.map?60:350)||t.ttl<=0){Destroy(t.rect.gameObject);targets.RemoveAt(i);}}}
     void Catch(Target t){caught=t;grip=1;warning=false;lastTap=Time.time;hookState=t.def.Heavy?HookState.Fighting:HookState.Reeling;t.rect.SetAsLastSibling();gripBar.gameObject.SetActive(t.def.Heavy);hintText.text=t.def.Heavy?"HIZLI HIZLI DOKUN!":"AVIN YUKARI GELİYOR";Notify(t.def.Heavy?"ÇEK! ÇEK! ÇEK!":"YAKALADIN!",cream,1.2f,1,null);PlayWaterEffect();}
     void Escape(){var t=caught;caught=null;t.escaped=true;t.speed=Mathf.Sign(t.speed==0?1:t.speed)*260;t.ttl=2;hookState=HookState.Reeling;gripBar.gameObject.SetActive(false);Notify("KAÇTI!",new Color(1,.5f,.3f),1.8f,2,"escaped");hintText.text="BOŞ OLTAYI ÇEK";}
     void Land(){bool advance=false;if(caught!=null){var d=caught.def;int value=Mathf.RoundToInt(d.value*caught.scale);float reward=Mathf.Max(1,value/45f);float added=FishingRules.RewardTime(seconds,reward)-seconds;seconds+=added;coins+=value;score+=value;advance=caught.map||coins>=FishingRules.Goal(stage);if(caught.map)schedule.Collect();
@@ -173,8 +183,16 @@ public sealed class FishingGame : MonoBehaviour {
     void PlayVoice(string name){if(name=="cast"||name=="pull")return;if(muted||voiceCooldown>0)return;var clip=Resources.Load<AudioClip>("Audio/"+name);if(clip==null)return;voice.Stop();voice.clip=clip;voice.Play();voiceCooldown=.6f;}
     void Tone(float frequency,float duration){if(muted)return;string key=frequency.ToString();if(!clips.TryGetValue(key,out var clip)){int n=(int)(22050*duration);float[] samples=new float[n];for(int i=0;i<n;i++)samples[i]=Mathf.Sin(i*frequency*2*Mathf.PI/22050)*Mathf.Sin(Mathf.PI*i/n)*.18f;clip=AudioClip.Create(key,n,1,22050,false);clip.SetData(samples,0);clips[key]=clip;}effects.PlayOneShot(clip);}
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-    public IEnumerator SmokeTest(){StartRun();yield return null;Press();if(hookState!=HookState.Sinking)throw new Exception("Cast state");Press();if(hookState!=HookState.Reeling)throw new Exception("Reel state");hookY=DockY;Land();var d=FishingRules.Catalog[6];var t=new Target{def=d,x=hookX,y=700,scale=1,ttl=100,rect=Pic("Test shark",world,SeaArt.Crop(d.sheet,d.x,d.y,d.w,d.h),hookX,700,200,90).rectTransform};targets.Add(t);hookY=700;hookState=HookState.Reeling;TryCatch();if(caught!=null)throw new Exception("Empty returning hook caught a target");hookState=HookState.Sinking;TryCatch();if(caught!=t)throw new Exception("Descending hook missed contact");
-        foreach(float angle in new[]{-8f,0f,8f}){boat.localRotation=Quaternion.Euler(0,0,angle);UpdateHook();Vector2 endpoint=world.InverseTransformPoint(line.TransformPoint(new Vector3(0,-line.rect.height/2,0)));if(Vector2.Distance(endpoint,RodTip())>.1f)throw new Exception("Line detached from rod");}if(hookState!=HookState.Fighting)throw new Exception("Heavy catch");float oldY=hookY;lastTap=-10;Press();if(hookY>=oldY)throw new Exception("Tap progress");Escape();if(caught!=null)throw new Exception("Escape");hookY=DockY;Land();for(int i=0;i<5;i++)AdvanceStage();if(playing)throw new Exception("Map completion");Debug.Log("BALIK_PLAYMODE_PASS: cast, reel, no return catches, descending contact, rod attachment at three angles, heavy tap, escape, five-piece victory");ShowHome();}
+    public IEnumerator SmokeTest(){StartRun();yield return null;Press();if(hookState!=HookState.Sinking)throw new Exception("Cast state");Press();if(hookState!=HookState.Reeling)throw new Exception("Reel state");hookY=DockY;Land();
+        foreach(var actor in targets)Destroy(actor.rect.gameObject);targets.Clear();
+        foreach(int direction in new[]{-1,1}){wind=direction;SpawnMap();var map=targets[targets.Count-1];
+            if(map.x>=-43&&map.x<=width+43)throw new Exception("Map appeared inside screen");
+            if(Mathf.Sign(map.speed)!=direction)throw new Exception("Map ignored current direction");
+            float halfCrossing=(width+120)/Mathf.Abs(map.speed)/2;AnimateTargets(halfCrossing);
+            if(map.x<0||map.x>width||!targets.Contains(map))throw new Exception("Map did not drift through screen");
+            AnimateTargets(halfCrossing+1);if(targets.Contains(map))throw new Exception("Map did not leave screen");}
+        var d=FishingRules.Catalog[6];var t=new Target{def=d,x=hookX,y=700,scale=1,ttl=100,rect=Pic("Test shark",world,SeaArt.Crop(d.sheet,d.x,d.y,d.w,d.h),hookX,700,200,90).rectTransform};targets.Add(t);hookY=700;hookState=HookState.Reeling;TryCatch();if(caught!=null)throw new Exception("Empty returning hook caught a target");hookState=HookState.Sinking;TryCatch();if(caught!=t)throw new Exception("Descending hook missed contact");
+        foreach(float angle in new[]{-8f,0f,8f}){boat.localRotation=Quaternion.Euler(0,0,angle);UpdateHook();Vector2 endpoint=world.InverseTransformPoint(line.TransformPoint(new Vector3(0,-line.rect.height/2,0)));if(Vector2.Distance(endpoint,RodTip())>.1f)throw new Exception("Line detached from rod");}if(hookState!=HookState.Fighting)throw new Exception("Heavy catch");float oldY=hookY;lastTap=-10;Press();if(hookY>=oldY)throw new Exception("Tap progress");Escape();if(caught!=null)throw new Exception("Escape");hookY=DockY;Land();for(int i=0;i<5;i++)AdvanceStage();if(playing)throw new Exception("Map completion");Debug.Log("BALIK_PLAYMODE_PASS: cast, reel, no return catches, descending contact, map enters and exits with current in both directions, rod attachment at three angles, heavy tap, escape, five-piece victory");ShowHome();}
 #endif
 }
 }

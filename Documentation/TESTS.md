@@ -25,3 +25,9 @@ BALIK_MAC_BUILD_PASS
 - Güncel Mac görüntü testi hatasız; telefon ekranı `Previews/revised-phone.png`.
 - SAL/ÇEK konuşmaları devre dışı; yerel sentezlenen dalga döngüsü ve su efekti eklendi.
 - Gerçekçi parşömen sprite ve sakin/yoğun balık geçiş dönemleri eklendi.
+
+## Akıntı ve yoğunluk ayarı
+
+- Başlangıç 5 hedef; sakin dönem 8–14 sn, üretim aralığı 3–5 sn, üst sınır 5. Yoğun dönem 8–13 sn, üretim aralığı 1,3–2,6 sn, üst sınır 10.
+- Harita sprite'ının iki yönde de ekran dışında başladığı, ekran içinden geçtiği ve karşı kenardan tamamen çıktığı çalışan oyun testinde doğrulandı. İki fırsat takvimi değişmedi.
+- Rüzgâr HUD yazısı kaldırıldı; atış sapması ve harita akıntı yönü korunuyor.

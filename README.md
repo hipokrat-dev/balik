@@ -13,10 +13,10 @@ Sahne `FishingGame` tarafından çalışma anında oluşturulur; Play dışında
 - 120 saniye ile başlar. Tek düğme: yukarıdayken **SAL**, su altındayken **ÇEK**.
 - Rüzgâr atışta hafif sola / düz / sağa sapma verir. Oyuncu yönlendirmez.
 - Kanca yalnızca aşağı inerken ilk değdiği hedefi yakalar. Boş yukarı çekişte hiçbir hedef yakalanmaz. Misina olta ucundaki halkayı ve kancanın gözünü takip eder.
-- Tür, boyut, zaman, yön, hız ve sürü sayısı ağırlıklı rastgeledir. 12–22 sn sakin dönemlerde 5–11 sn aralıklarla en fazla 3; 7–12 sn yoğun dönemlerde 1,8–3,5 sn aralıklarla en fazla 8 hedef bulunur. Başlangıçta 2–3 hedef vardır; boş atışlar normaldir.
+- Tür, boyut, zaman, yön, hız ve sürü sayısı ağırlıklı rastgeledir. 8–14 sn sakin dönemlerde 3–5 sn aralıklarla en fazla 5; 8–13 sn yoğun dönemlerde 1,3–2,6 sn aralıklarla en fazla 10 hedef bulunur. Başlangıçta 5 hedef vardır; boş atışlar normaldir.
 - Büyük avlarda sık dokunmak gerekir. Çekiş göstergesi tükenirse av kaçar; boş kanca geri çekilir.
 - Balık, sandık ve dört çöp türü tekneye teslim edildiğinde değer/45 saniye kazandırır (en az 1 sn). Sayaç 180 saniye ile sınırlıdır.
-- Her aşamada aynı harita parçası 18. ve 48. saniyelerde en fazla iki kez, 14 saniyeliğine görünür. Yakalanırsa veya aşama para hedefi tamamlanırsa bir parça kazanılır ve aşama geçilir. Beş parça oyunu kazandırır.
+- Her aşamada aynı harita parçası 18. ve 48. saniyelerde en fazla iki kez ekranın dışından akıntı yönünde gelir. Ekranı 18–22 saniyede geçer ve diğer kenardan çıkar; ortada belirmez veya kaybolmaz. Yakalanırsa veya aşama para hedefi tamamlanırsa bir parça kazanılır ve aşama geçilir. Beş parça oyunu kazandırır.
 - Para aşama geçişinde sıfırlanır; skor birikir. En yüksek skor cihazda PlayerPrefs ile kaydedilir.
 - Duraklatma ve uygulama arka plana geçişi sayacı durdurur. Ses aç/kapat tercihi kaydedilir.
 
