@@ -42,3 +42,5 @@ BALIK_MAC_BUILD_PASS
 - Android yükleme uyumluluğu: önceki APK yalnızca arm64-v8a içeriyordu. Çalıştığı bildirilen Ayşe APK'sı arm64-v8a ve armeabi-v7a içeriyor. Balık 1.0.1 (versionCode 2) her iki ABI ile yeniden derlendi; aapt ile ikisi doğrulandı ve apksigner imza doğrulaması geçti. Her iki oyun Android API 26 ve üzerini gerektiriyor. Telefon üzerinde kurulum sonucu henüz doğrulanmadı.
 
 - Marka açılışı 540×960 telefon görünümünde ekran görüntüsüyle kontrol edildi; Türkçe metinler okunur, kırpılma yok. `BALIK_INTRO_PASS` ile açılışın ana menüye geçişi doğrulandı. İkon varsayılan uygulama ikonuna ve Android ikon yuvalarına bağlandı.
+
+- 1.0.3: 12.000 puanda tur devam ediyor; sayaç sıfırlanınca sonuç açılıyor. Çıkış onayı turu duraklatıyor, vazgeçme devam ettiriyor. Her canlıda iki yönde ağızdan 18 UI birimi uzaktaki temas yakalıyor, kuyruk teması reddediliyor. Mevcut diğer oyun döngüsü kontrolleri geçti. 540×960 skor ekranında çıkış ikonu ve aşamasız HUD görsel olarak doğrulandı.

@@ -12,8 +12,6 @@ namespace Balik {
     }
     public static class FishingRules {
         public const float StartSeconds=120, MaxSeconds=180;
-        public const int MapPieces=5;
-        public static int Goal(int stage)=>600+stage*200;
         public static float RewardTime(float time, float reward)=>Math.Min(MaxSeconds,time+reward);
         public static float GripAfter(float grip,float seconds,float difficulty)=>Math.Max(0,grip-seconds*(.19f+difficulty*.035f));
         public static readonly CatchDefinition[] Catalog={
