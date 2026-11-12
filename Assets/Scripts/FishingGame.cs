@@ -91,32 +91,60 @@ public sealed class FishingGame : MonoBehaviour {
     }
     IEnumerator StudioIntro(bool preview=false){
         playing=false;hud.gameObject.SetActive(false);ClearOverlay();
-        var backdrop=Pic("Studio deep sea",overlay,null,width/2,height/2,width,height,new Color(.008f,.035f,.075f));
+        var sea=Pic("Cinematic sea",overlay,SeaArt.Whole("ocean"),width/2,height/2,width,height).rectTransform;
+        var backdrop=Pic("Midnight veil",overlay,null,width/2,height/2,width,height,new Color(.003f,.014f,.035f,.91f));
         backdrop.raycastTarget=true;bool skip=false;
         backdrop.gameObject.AddComponent<Button>().onClick.AddListener(()=>skip=true);
-        var content=Node("Studio reveal",overlay,0,0,width,height);content.pivot=new Vector2(0,1);
-        var fade=content.gameObject.AddComponent<CanvasGroup>();fade.blocksRaycasts=false;
-        var glow=Pic("Turquoise halo",content,SeaArt.Disc(),width/2,470,390,390,new Color(.025f,.40f,.43f,.2f)).rectTransform;
-        var emblem=Pic("Fishing emblem",content,SeaArt.Whole("app-icon"),width/2,470,280,280).rectTransform;
-        Label("Studio name",content,"Yener Game Studio",width/2,690,width-48,80,43,gold);
-        Pic("Gold divider",content,null,width/2,758,170,2,new Color(1,.78f,.26f,.75f));
-        Label("Series name",content,"Ayşe Senanın\nOyun Serisi",width/2,840,width-60,110,31,cream);
-        var prompt=Label("Skip intro",content,"DEVAM ETMEK İÇİN DOKUN",width/2,1100,width-60,45,16,new Color(.5f,.75f,.78f));
-        var motes=new RectTransform[18];
-        for(int i=0;i<motes.Length;i++)motes[i]=Pic("Light mote",content,SeaArt.Disc(),width*(.08f+.84f*(i%6)/5f),300+i*37,3+i%3,3+i%3,new Color(.5f,.9f,1,.3f)).rectTransform;
+        var content=Node("Cinematic titles",overlay,0,0,width,height);content.pivot=new Vector2(0,1);
+        var all=content.gameObject.AddComponent<CanvasGroup>();all.blocksRaycasts=false;
+        // Soft light behind the lettering, built from nested translucent discs.
+        for(int i=18;i>0;i--)Pic("Underwater bloom",content,SeaArt.Disc(),width/2,560,150+i*26,150+i*26,new Color(.03f,.35f,.38f,.014f));
+        var rays=new RectTransform[5];
+        for(int i=0;i<rays.Length;i++){
+            rays[i]=Pic("Light shaft",content,null,width*(.15f+i*.18f),350,12+i*5,1100,new Color(.18f,.62f,.67f,.025f)).rectTransform;
+            rays[i].localRotation=Quaternion.Euler(0,0,-22+i*5);
+        }
+        var motes=new RectTransform[28];
+        for(int i=0;i<motes.Length;i++)motes[i]=Pic("Gold dust",content,SeaArt.Disc(),width*(.07f+.86f*(i%7)/6f),230+i*30,2+i%3,2+i%3,new Color(1,.79f,.40f,.17f+i%4*.06f)).rectTransform;
+        var studio=Node("Studio lockup",content,0,0,width,height);studio.pivot=new Vector2(0,1);
+        var studioFade=studio.gameObject.AddComponent<CanvasGroup>();
+        var serif=Resources.Load<Font>("Fonts/Lora");
+        var monogram=Label("Studio seal",studio,"Y",width/2,365,140,130,93,gold);monogram.font=serif;monogram.fontStyle=FontStyle.Normal;
+        var seal=Pic("Seal top",studio,null,width/2,292,46,2,gold).rectTransform;
+        Pic("Seal bottom",studio,null,width/2,438,46,2,gold);
+        var name=Label("Yener",studio,"Yener",width/2,570,width-60,155,108,gold);name.font=serif;name.fontStyle=FontStyle.Normal;
+        var subtitle=Label("Game Studio",studio,"Game Studio",width/2,687,width-60,70,38,cream);subtitle.font=serif;subtitle.fontStyle=FontStyle.Normal;
+        // Remove the gameplay drop shadow for refined title typography.
+        foreach(var text in new[]{monogram,name,subtitle}){var shadow=text.GetComponent<Shadow>();if(shadow!=null)Destroy(shadow);}
+        var goldName=name.gameObject.AddComponent<StudioGoldText>();
+        var goldSeal=monogram.gameObject.AddComponent<StudioGoldText>();
+        var rule=Pic("Unfolding gold line",content,null,width/2,770,1,2,new Color(.9f,.67f,.3f)).rectTransform;
+        var series=Node("Series credit",content,0,0,width,height);series.pivot=new Vector2(0,1);
+        var seriesFade=series.gameObject.AddComponent<CanvasGroup>();
+        var seriesName=Label("Ayse Sena series",series,"Ayşe Senanın",width/2,835,width-60,75,39,cream);seriesName.font=serif;seriesName.fontStyle=FontStyle.Normal;
+        var seriesDetail=Label("Series detail",series,"Oyun Serisi",width/2,899,width-60,55,25,new Color(.68f,.80f,.81f));seriesDetail.font=serif;seriesDetail.fontStyle=FontStyle.Normal;
+        var prompt=Label("Skip intro",content,"GEÇMEK İÇİN DOKUN",width/2,1160,width-60,40,14,new Color(.43f,.58f,.62f));
+        var curtain=Pic("Final cinematic fade",overlay,null,width/2,height/2,width,height,new Color(.003f,.014f,.035f,0));
         bool captured=false;
-        for(float elapsed=0;elapsed<3.6f;elapsed+=Time.unscaledDeltaTime){
-            fade.alpha=Mathf.Clamp01(elapsed/.65f)*Mathf.Clamp01((3.6f-elapsed)/.45f);
-            emblem.localScale=Vector3.one*(.90f+.10f*Mathf.SmoothStep(0,1,elapsed/1.3f));
-            emblem.anchoredPosition=new Vector2(width/2,-470+Mathf.Sin(elapsed*1.7f)*5);
-            glow.localScale=Vector3.one*(1+Mathf.Sin(elapsed*2)*.05f);
-            prompt.gameObject.SetActive(elapsed>.8f);
-            for(int i=0;i<motes.Length;i++)motes[i].anchoredPosition=new Vector2(width*(.08f+.84f*(i%6)/5f)+Mathf.Sin(elapsed+i)*12,-(300+i*37)+elapsed*(12+i%5));
-            if(preview&&!captured&&elapsed>=1.7f){yield return new WaitForEndOfFrame();ScreenCapture.CaptureScreenshot("/tmp/balik-intro.png");captured=true;}
-            if(skip&&elapsed>.8f)break;
+        for(float elapsed=0;elapsed<6.8f;elapsed+=Time.unscaledDeltaTime){
+            all.alpha=Mathf.SmoothStep(0,1,elapsed/.9f);
+            studioFade.alpha=Mathf.SmoothStep(0,1,(elapsed-.5f)/1.3f);
+            studio.anchoredPosition=new Vector2(0,-18*(1-Mathf.SmoothStep(0,1,(elapsed-.5f)/2f)));
+            name.rectTransform.localScale=Vector3.one*Mathf.Lerp(1.065f,1,Mathf.Clamp01(elapsed/4.8f));
+            sea.localScale=Vector3.one*(1.03f+elapsed*.004f);
+            seriesFade.alpha=Mathf.SmoothStep(0,1,(elapsed-2.65f)/1.2f);
+            series.anchoredPosition=new Vector2(0,-12*(1-seriesFade.alpha));
+            rule.sizeDelta=new Vector2(230*Mathf.SmoothStep(0,1,(elapsed-2.1f)/1.2f),2);
+            goldName.SetSweep((elapsed-1.6f)/2f);goldSeal.SetSweep((elapsed-.7f)/1.6f);
+            prompt.gameObject.SetActive(elapsed>2.4f);
+            for(int i=0;i<motes.Length;i++)motes[i].anchoredPosition=new Vector2(width*(.07f+.86f*(i%7)/6f)+Mathf.Sin(elapsed*.35f+i)*15,-(230+i*30)+elapsed*(5+i%5));
+            for(int i=0;i<rays.Length;i++)rays[i].localRotation=Quaternion.Euler(0,0,-22+i*5+Mathf.Sin(elapsed*.3f+i)*3);
+            curtain.color=new Color(.003f,.014f,.035f,Mathf.SmoothStep(0,1,(elapsed-6f)/.8f));
+            if(preview&&!captured&&elapsed>=4.2f){yield return new WaitForEndOfFrame();ScreenCapture.CaptureScreenshot("/tmp/balik-intro.png");captured=true;}
+            if(skip&&elapsed>1.2f)break;
             yield return null;
         }
-        ShowHome();if(preview)Debug.Log("BALIK_INTRO_PASS: studio reveal completed and home opened");
+        ShowHome();if(preview)Debug.Log("BALIK_INTRO_PASS: cinematic title sequence completed and home opened");
     }
     void ClearOverlay(){foreach(Transform c in overlay)Destroy(c.gameObject);overlay.gameObject.SetActive(true);}
     void Scrim(float alpha=.76f){Pic("Shade",overlay,null,width/2,height/2,width,height,new Color(.005f,.04f,.09f,alpha)).raycastTarget=true;}

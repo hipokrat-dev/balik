@@ -47,6 +47,8 @@ Seyrek dönemlerde de en az iki serbest normal balık görünür kalır. Çıkı
 
 Çöpler (konserve, çorap, ayakkabı, poşet) 0 puan ve 0 saniye verir. Canlılar yalnızca baş/ağız çevresinden yakalanır; iğne ağız noktasına sabitlenir ve gövde bu noktanın etrafında çırpınır.
 
-Uygulama ikonu balık–olta–hazine temalı 3D görseldir. Açılışta “Yener Game Studio” ve “Ayşe Senanın Oyun Serisi” yazıları ışık parçacıklarıyla belirir; 3.6 saniye sonra ana menü açılır veya dokunarak geçilir. Android 1.0.3, hem ARMv7 hem ARM64 içerir.
+Uygulama ikonu balık–olta–hazine temalı 3D görseldir. Açılışta “Yener Game Studio” ve “Ayşe Senanın Oyun Serisi” yazıları Lora serif tipografi, altın ışık taraması, su altı huzmeleri ve kademeli geçişlerle belirir; 6.8 saniye sonra ana menü açılır veya dokunarak geçilir. Android 1.0.4, hem ARMv7 hem ARM64 içerir.
 
 Üstteki × çıkış simgesi ve mola menüsü uygulamadan çıkışa erişim sağlar. Onay ekranı turu duraklatır; vazgeçince devam eder. Ağız yakalama alanı genişletildi; gövde/kuyruk teması hâlâ yeterli değildir.
+
+Stüdyo açılışındaki Lora yazı tipi SIL Open Font License ile dağıtılır; lisans `Assets/Resources/Fonts/Lora-LICENSE.txt` içindedir.

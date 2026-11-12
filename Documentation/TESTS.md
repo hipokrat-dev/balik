@@ -44,3 +44,5 @@ BALIK_MAC_BUILD_PASS
 - Marka açılışı 540×960 telefon görünümünde ekran görüntüsüyle kontrol edildi; Türkçe metinler okunur, kırpılma yok. `BALIK_INTRO_PASS` ile açılışın ana menüye geçişi doğrulandı. İkon varsayılan uygulama ikonuna ve Android ikon yuvalarına bağlandı.
 
 - 1.0.3: 12.000 puanda tur devam ediyor; sayaç sıfırlanınca sonuç açılıyor. Çıkış onayı turu duraklatıyor, vazgeçme devam ettiriyor. Her canlıda iki yönde ağızdan 18 UI birimi uzaktaki temas yakalıyor, kuyruk teması reddediliyor. Mevcut diğer oyun döngüsü kontrolleri geçti. 540×960 skor ekranında çıkış ikonu ve aşamasız HUD görsel olarak doğrulandı.
+
+- 1.0.4 sinematik açılış: 540×960 görüntüde Lora yazı tipiyle Türkçe metinler, altın başlık, deniz fonu ve seri adı kontrol edildi. 6.8 saniyelik sekans sonunda `BALIK_INTRO_PASS` ile ana menüye geçiş doğrulandı.
