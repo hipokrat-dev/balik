@@ -46,3 +46,5 @@ Arka plan müziği: kullanıcının sağladığı `Untitled.wav`, `Assets/Resour
 Seyrek dönemlerde de en az iki serbest normal balık görünür kalır. Çıkışa yaklaşan veya yakalanan balıklar için kenardan yeni balık girer; çöp ve harita bu alt sınıra sayılmaz.
 
 Çöpler (konserve, çorap, ayakkabı, poşet) 0 puan ve 0 saniye verir. Canlılar yalnızca baş/ağız çevresinden yakalanır; iğne ağız noktasına sabitlenir ve gövde bu noktanın etrafında çırpınır.
+
+Uygulama ikonu balık–olta–hazine temalı 3D görseldir. Açılışta “Yener Game Studio” ve “Ayşe Senanın Oyun Serisi” yazıları ışık parçacıklarıyla belirir; 3.6 saniye sonra ana menü açılır veya dokunarak geçilir. Android 1.0.2, hem ARMv7 hem ARM64 içerir.

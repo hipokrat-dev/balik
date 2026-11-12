@@ -40,3 +40,5 @@ BALIK_MAC_BUILD_PASS
 - `--balik-mouth-preview` ile telefon görünümünde ağızdan asılı köpek balığı kontrol edildi. Çekme göstergesi balığın gövdesini kapatmamak için iğnenin üstüne taşındı.
 
 - Android yükleme uyumluluğu: önceki APK yalnızca arm64-v8a içeriyordu. Çalıştığı bildirilen Ayşe APK'sı arm64-v8a ve armeabi-v7a içeriyor. Balık 1.0.1 (versionCode 2) her iki ABI ile yeniden derlendi; aapt ile ikisi doğrulandı ve apksigner imza doğrulaması geçti. Her iki oyun Android API 26 ve üzerini gerektiriyor. Telefon üzerinde kurulum sonucu henüz doğrulanmadı.
+
+- Marka açılışı 540×960 telefon görünümünde ekran görüntüsüyle kontrol edildi; Türkçe metinler okunur, kırpılma yok. `BALIK_INTRO_PASS` ile açılışın ana menüye geçişi doğrulandı. İkon varsayılan uygulama ikonuna ve Android ikon yuvalarına bağlandı.

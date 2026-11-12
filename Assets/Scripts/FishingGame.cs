@@ -78,6 +78,7 @@ public sealed class FishingGame : MonoBehaviour {
     IEnumerator Start(){
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         var args=Environment.GetCommandLineArgs();
+        if(Array.IndexOf(args,"--balik-intro-preview")>=0){yield return StudioIntro(true);Application.Quit(0);yield break;}
         if(Array.IndexOf(args,"--balik-smoke")>=0){yield return null;yield return SmokeTest();yield return new WaitForEndOfFrame();Application.Quit(0);}
         if(Array.IndexOf(args,"--balik-mouth-preview")>=0){
             StartRun();var d=FishingRules.Catalog[6];
@@ -87,7 +88,36 @@ public sealed class FishingGame : MonoBehaviour {
         }
         if(Array.IndexOf(args,"--balik-preview")>=0){StartRun();yield return new WaitForSeconds(1);paused=true;ScreenCapture.CaptureScreenshot("/tmp/balik-phone.png");yield return new WaitForSeconds(.5f);Application.Quit(0);}
 #endif
-        yield break;
+        if(!testMode)yield return StudioIntro();
+    }
+    IEnumerator StudioIntro(bool preview=false){
+        playing=false;hud.gameObject.SetActive(false);ClearOverlay();
+        var backdrop=Pic("Studio deep sea",overlay,null,width/2,height/2,width,height,new Color(.008f,.035f,.075f));
+        backdrop.raycastTarget=true;bool skip=false;
+        backdrop.gameObject.AddComponent<Button>().onClick.AddListener(()=>skip=true);
+        var content=Node("Studio reveal",overlay,0,0,width,height);content.pivot=new Vector2(0,1);
+        var fade=content.gameObject.AddComponent<CanvasGroup>();fade.blocksRaycasts=false;
+        var glow=Pic("Turquoise halo",content,SeaArt.Disc(),width/2,470,390,390,new Color(.025f,.40f,.43f,.2f)).rectTransform;
+        var emblem=Pic("Fishing emblem",content,SeaArt.Whole("app-icon"),width/2,470,280,280).rectTransform;
+        Label("Studio name",content,"Yener Game Studio",width/2,690,width-48,80,43,gold);
+        Pic("Gold divider",content,null,width/2,758,170,2,new Color(1,.78f,.26f,.75f));
+        Label("Series name",content,"Ayşe Senanın\nOyun Serisi",width/2,840,width-60,110,31,cream);
+        var prompt=Label("Skip intro",content,"DEVAM ETMEK İÇİN DOKUN",width/2,1100,width-60,45,16,new Color(.5f,.75f,.78f));
+        var motes=new RectTransform[18];
+        for(int i=0;i<motes.Length;i++)motes[i]=Pic("Light mote",content,SeaArt.Disc(),width*(.08f+.84f*(i%6)/5f),300+i*37,3+i%3,3+i%3,new Color(.5f,.9f,1,.3f)).rectTransform;
+        bool captured=false;
+        for(float elapsed=0;elapsed<3.6f;elapsed+=Time.unscaledDeltaTime){
+            fade.alpha=Mathf.Clamp01(elapsed/.65f)*Mathf.Clamp01((3.6f-elapsed)/.45f);
+            emblem.localScale=Vector3.one*(.90f+.10f*Mathf.SmoothStep(0,1,elapsed/1.3f));
+            emblem.anchoredPosition=new Vector2(width/2,-470+Mathf.Sin(elapsed*1.7f)*5);
+            glow.localScale=Vector3.one*(1+Mathf.Sin(elapsed*2)*.05f);
+            prompt.gameObject.SetActive(elapsed>.8f);
+            for(int i=0;i<motes.Length;i++)motes[i].anchoredPosition=new Vector2(width*(.08f+.84f*(i%6)/5f)+Mathf.Sin(elapsed+i)*12,-(300+i*37)+elapsed*(12+i%5));
+            if(preview&&!captured&&elapsed>=1.7f){yield return new WaitForEndOfFrame();ScreenCapture.CaptureScreenshot("/tmp/balik-intro.png");captured=true;}
+            if(skip&&elapsed>.8f)break;
+            yield return null;
+        }
+        ShowHome();if(preview)Debug.Log("BALIK_INTRO_PASS: studio reveal completed and home opened");
     }
     void ClearOverlay(){foreach(Transform c in overlay)Destroy(c.gameObject);overlay.gameObject.SetActive(true);}
     void Scrim(float alpha=.76f){Pic("Shade",overlay,null,width/2,height/2,width,height,new Color(.005f,.04f,.09f,alpha)).raycastTarget=true;}
