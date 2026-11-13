@@ -46,3 +46,5 @@ BALIK_MAC_BUILD_PASS
 - 1.0.3: 12.000 puanda tur devam ediyor; sayaç sıfırlanınca sonuç açılıyor. Çıkış onayı turu duraklatıyor, vazgeçme devam ettiriyor. Her canlıda iki yönde ağızdan 18 UI birimi uzaktaki temas yakalıyor, kuyruk teması reddediliyor. Mevcut diğer oyun döngüsü kontrolleri geçti. 540×960 skor ekranında çıkış ikonu ve aşamasız HUD görsel olarak doğrulandı.
 
 - 1.0.4 sinematik açılış: 540×960 görüntüde Lora yazı tipiyle Türkçe metinler, altın başlık, deniz fonu ve seri adı kontrol edildi. 6.8 saniyelik sekans sonunda `BALIK_INTRO_PASS` ile ana menüye geçiş doğrulandı.
+
+- 1.0.5: başlangıç sandığının 3 saniyelik simülasyonda yer değiştirmemesi ve tabandaki sandık sayısının ikiyle sınırlanması doğrulandı. Telefon görüntüsünde iki taban sandığı ve sarı altın para uçuşu kontrol edildi. `BALIK_CHEST_PASS`: uçuş sonunda 650 puan tam olarak eklendi, bekleyen gösterim puanı sıfırlandı. Genel oyun döngüsü testi geçti.

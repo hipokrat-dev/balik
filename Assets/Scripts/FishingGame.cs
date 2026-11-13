@@ -17,7 +17,8 @@ public sealed class FishingGame : MonoBehaviour {
     Image buttonImage;
     Font font; AudioSource effects,voice,ambience,music; Dictionary<string,AudioClip> clips=new Dictionary<string,AudioClip>();
     HookState hookState; Target caught;
-    float trafficRemaining; bool crowded;
+    float trafficRemaining,nextChest,coinPulse; bool crowded;
+    int pendingCoinDisplay,runId; readonly List<RectTransform> coinEffects=new List<RectTransform>();
     float width=720,height=1280,seconds=120,runElapsed,nextSpawn,hookX,hookY,grip,castWind,lastTap=-10,toastUntil,toastStart,buttonPulse,windClock,voiceCooldown;
     int coins,score,best,wind,toastPriority,runTarget; bool playing,paused,newRecord,low30,low10,warning,muted,testMode;
     const float DockY=245, FloorY=1080;
@@ -60,7 +61,7 @@ public sealed class FishingGame : MonoBehaviour {
         Label("Challenge title",recordPanel.transform,"REKOR AVI",142,24,250,28,19,gold);
         scoreText=Label("Challenge progress",recordPanel.transform,"REKORU GEÇ!",142,69,250,45,23);
         var act=Button("SAL",hud,width-109,1169-bottomInset,182,182,Press,true);action=act.GetComponent<RectTransform>();actionText=act.GetComponentInChildren<Text>();buttonImage=act.GetComponent<Image>();
-        hintText=Label("Action hint",hud,"DOKUN • OLTAYI SAL",width-130,1058-bottomInset,245,42,18);
+        hintText=Label("Action hint",hud,"DOKUN • OLTAYI SAL",width-130,900-bottomInset,245,42,18);
         gripBar=Node("Catch effort",hud,width/2,650,230,72);
         Panel("Grip frame",gripBar,115,46,230,28);
         gripFill=Pic("Grip fill",gripBar,SeaArt.Disc(),115,46,205,12,new Color(.2f,1,.7f)).rectTransform;
@@ -79,6 +80,14 @@ public sealed class FishingGame : MonoBehaviour {
         var args=Environment.GetCommandLineArgs();
         if(Array.IndexOf(args,"--balik-intro-preview")>=0){yield return StudioIntro(true);Application.Quit(0);yield break;}
         if(Array.IndexOf(args,"--balik-smoke")>=0){yield return null;yield return SmokeTest();yield return new WaitForEndOfFrame();Application.Quit(0);}
+        if(Array.IndexOf(args,"--balik-chest-preview")>=0){
+            StartRun();SpawnChest();yield return new WaitForEndOfFrame();ScreenCapture.CaptureScreenshot("/tmp/balik-seabed.png");
+            yield return new WaitForSeconds(.3f);var chest=targets.Find(t=>t.def.id=="chest");Catch(chest);hookY=DockY;Land();
+            yield return new WaitForSeconds(.55f);paused=true;yield return new WaitForEndOfFrame();ScreenCapture.CaptureScreenshot("/tmp/balik-coins.png");
+            yield return new WaitForSeconds(.2f);paused=false;yield return new WaitForSeconds(1.5f);
+            if(pendingCoinDisplay!=0||score!=650)throw new Exception("Chest coin credit mismatch");
+            Debug.Log("BALIK_CHEST_PASS: coin flight credited exactly 650 points");Application.Quit(0);yield break;
+        }
         if(Array.IndexOf(args,"--balik-mouth-preview")>=0){
             StartRun();var d=FishingRules.Catalog[6];
             var fish=new Target{def=d,x=width/2,y=600,scale=1,ttl=100,rect=Pic("Preview shark",world,SeaArt.Crop(d.sheet,d.x,d.y,d.w,d.h),width/2,600,250,250*d.h/d.w).rectTransform};
@@ -148,7 +157,7 @@ public sealed class FishingGame : MonoBehaviour {
     }
     void ClearOverlay(){foreach(Transform c in overlay)Destroy(c.gameObject);overlay.gameObject.SetActive(true);}
     void Scrim(float alpha=.76f){Pic("Shade",overlay,null,width/2,height/2,width,height,new Color(.005f,.04f,.09f,alpha)).raycastTarget=true;}
-    void ShowHome(){SaveBest();paused=false;playing=false;hud.gameObject.SetActive(false);ClearOverlay();Scrim(.35f);
+    void ShowHome(){ClearCoinEffects();SaveBest();paused=false;playing=false;hud.gameObject.SetActive(false);ClearOverlay();Scrim(.35f);
         Button("×",overlay,width-50,60+(Screen.height-Screen.safeArea.yMax)*1280f/Screen.height,68,70,ConfirmExit);
         Label("Kicker",overlay,"BİR DENİZ MACERASI",width/2,310,width-40,45,23,gold);
         Label("Title",overlay,"DERİNLİKLERİN\nHAZİNESİ",width/2,420,width-30,190,60);
@@ -159,7 +168,7 @@ public sealed class FishingGame : MonoBehaviour {
         Label("Guide",overlay,"Tek düğme: SAL / ÇEK\nBüyük avlarda art arda dokun!",width/2,1123,width-40,72,22);
         Button(muted?"SES KAPALI":"SES AÇIK",overlay,width/2,1212,235,58,()=>{ToggleSound();ShowHome();});
     }
-    public void StartRun(){foreach(var t in targets)Destroy(t.rect.gameObject);targets.Clear();seconds=120;score=coins=0;runTarget=best+1;runElapsed=0;schedule.Reset();newRecord=low30=low10=paused=false;playing=true;hookState=HookState.Ready;caught=null;hookX=(width*.31f+200);hookY=DockY;crowded=false;trafficRemaining=Random.Range(8f,14f);nextSpawn=Random.Range(2f,4f);toastPriority=0;toastUntil=0;overlay.gameObject.SetActive(false);hud.gameObject.SetActive(true);ChooseWind();for(int i=0;i<5;i++)Spawn(true);EnsureFishPresence();UpdateHud();Notify("RASTGELE!",gold,2,1,"start");}
+    public void StartRun(){ClearCoinEffects();foreach(var t in targets)Destroy(t.rect.gameObject);targets.Clear();seconds=120;score=coins=0;runTarget=best+1;runElapsed=0;schedule.Reset();newRecord=low30=low10=paused=false;playing=true;hookState=HookState.Ready;caught=null;hookX=(width*.31f+200);hookY=DockY;crowded=false;trafficRemaining=Random.Range(8f,14f);nextSpawn=Random.Range(2f,4f);toastPriority=0;toastUntil=0;overlay.gameObject.SetActive(false);hud.gameObject.SetActive(true);ChooseWind();for(int i=0;i<5;i++)Spawn(true);EnsureFishPresence();SpawnChest();nextChest=Random.Range(10f,16f);UpdateHud();Notify("RASTGELE!",gold,2,1,"start");}
     bool exitWasPaused;
     void ConfirmExit(){
         exitWasPaused=paused;paused=true;SaveBest();ClearOverlay();Scrim();
@@ -198,6 +207,8 @@ public sealed class FishingGame : MonoBehaviour {
         if(seconds<=30&&!low30){low30=true;Notify("SÜREN AZALIYOR!",new Color(1,.6f,.2f),2.5f,3,"time");}
         if(seconds<=10&&!low10){low10=true;Notify("SON 10 SANİYE!",new Color(1,.3f,.2f),2,4,"last10");}
         if(seconds>35)low30=false;if(seconds>15)low10=false;
+        nextChest-=dt;if(nextChest<=0){SpawnChest();nextChest=Random.Range(10f,16f);}
+        coinPulse=Mathf.Max(0,coinPulse-dt*4);coinText.rectTransform.localScale=Vector3.one*(1+coinPulse*.1f);
         trafficRemaining-=dt;
         if(trafficRemaining<=0){crowded=!crowded;trafficRemaining=crowded?Random.Range(8f,13f):Random.Range(8f,14f);nextSpawn=crowded?Random.Range(1f,2f):Random.Range(3f,5f);}
         nextSpawn-=dt;
@@ -215,7 +226,18 @@ public sealed class FishingGame : MonoBehaviour {
         buttonPulse=Mathf.Max(0,buttonPulse-dt*5);action.localScale=Vector3.one*(1-buttonPulse*.09f);
         if(Time.time<toastUntil){float t=Time.time-toastStart;float s=1+Mathf.Sin(Mathf.Min(1,t*4)*Mathf.PI)*.17f;toastRoot.localScale=Vector3.one*s;toastText.color=new Color(toastText.color.r,toastText.color.g,toastText.color.b,Mathf.Clamp01((toastUntil-Time.time)*3));}else toastText.text="";
     }
-    void Spawn(bool initial,bool reserveFish=false){var d=FishingRules.Pick(rng);if(reserveFish)while(d.sheet!="fish")d=FishingRules.Pick(rng);bool right=Random.value>.5f;float scale=Random.Range(.85f,1.16f),w=d.width*scale;var t=new Target{def=d,x=initial?Random.Range(30,width-30):reserveFish?(right?0:width):(right?-w:width+w),y=Random.Range(d.depthMin,d.depthMax),speed=Random.Range(25,70)*(right?1:-1),phase=Random.Range(0f,6f),scale=scale,ttl=1000};t.rect=Pic(d.name,world,SeaArt.Crop(d.sheet,d.x,d.y,d.w,d.h),t.x,t.y,w,w*d.h/d.w).rectTransform;t.rect.localScale=new Vector3(right?1:-1,1,1);targets.Add(t);hook.SetAsLastSibling();}
+    void Spawn(bool initial,bool reserveFish=false){var d=FishingRules.Pick(rng);while(d.id=="chest"||(reserveFish&&d.sheet!="fish"))d=FishingRules.Pick(rng);bool right=Random.value>.5f;float scale=Random.Range(.85f,1.16f),w=d.width*scale;var t=new Target{def=d,x=initial?Random.Range(30,width-30):reserveFish?(right?0:width):(right?-w:width+w),y=Random.Range(d.depthMin,d.depthMax),speed=Random.Range(25,70)*(right?1:-1),phase=Random.Range(0f,6f),scale=scale,ttl=1000};t.rect=Pic(d.name,world,SeaArt.Crop(d.sheet,d.x,d.y,d.w,d.h),t.x,t.y,w,w*d.h/d.w).rectTransform;t.rect.localScale=new Vector3(right?1:-1,1,1);targets.Add(t);hook.SetAsLastSibling();}
+    void SpawnChest(){
+        var existing=targets.FindAll(t=>t.def.id=="chest");if(existing.Count>=2)return;
+        var d=Array.Find(FishingRules.Catalog,t=>t.id=="chest");
+        float w=126,h=w*d.h/d.w;
+        float center=Mathf.Clamp(RodTip().x,100,width-100);
+        float left=Mathf.Clamp(center-80,80,width-80),right=Mathf.Clamp(center+80,80,width-80);
+        float x=existing.Count==0?(Random.value<.5f?left:right):(Mathf.Abs(existing[0].x-left)>Mathf.Abs(existing[0].x-right)?left:right);
+        var chest=new Target{def=d,x=x,y=FloorY-h*.5f,speed=0,scale=1,ttl=1000};
+        chest.rect=Pic("Seabed treasure chest",world,SeaArt.Crop(d.sheet,d.x,d.y,d.w,d.h),x,chest.y,w,h).rectTransform;
+        targets.Add(chest);hook.SetAsLastSibling();
+    }
     void EnsureFishPresence(){
         // Keep two free fish in view, replacing outgoing fish before they leave.
         // Trash, maps, escaped and hooked targets do not satisfy this reserve.
@@ -239,10 +261,17 @@ public sealed class FishingGame : MonoBehaviour {
         t.rect=Pic("Catchable parchment map",world,SeaArt.Whole("map-fragment"),t.x,t.y,86,90).rectTransform;
         targets.Add(t);
     }
-    void AnimateTargets(float dt){if(paused)return;for(int i=targets.Count-1;i>=0;i--){var t=targets[i];if(t==caught)continue;t.x+=t.speed*dt;t.phase+=dt*2;t.ttl-=dt;t.rect.anchoredPosition=new Vector2(t.x,-t.y+Mathf.Sin(t.phase)*5);t.rect.localRotation=Quaternion.Euler(0,0,Mathf.Sin(t.phase)*2);if(t.x< -(t.map?60:350)||t.x>width+(t.map?60:350)||t.ttl<=0){Destroy(t.rect.gameObject);targets.RemoveAt(i);}}}
+    void AnimateTargets(float dt){if(paused)return;for(int i=targets.Count-1;i>=0;i--){var t=targets[i];if(t==caught)continue;
+        if(t.def.id=="chest"){
+            float groundY=FloorY-t.rect.rect.height*.5f;
+            t.y=Mathf.MoveTowards(t.y,groundY,240*dt);t.rect.anchoredPosition=new Vector2(t.x,-t.y);t.rect.localRotation=Quaternion.identity;
+            if(Mathf.Abs(t.y-groundY)<.1f)t.escaped=false;continue;
+        }
+        t.x+=t.speed*dt;t.phase+=dt*2;t.ttl-=dt;t.rect.anchoredPosition=new Vector2(t.x,-t.y+Mathf.Sin(t.phase)*5);t.rect.localRotation=Quaternion.Euler(0,0,Mathf.Sin(t.phase)*2);if(t.x< -(t.map?60:350)||t.x>width+(t.map?60:350)||t.ttl<=0){Destroy(t.rect.gameObject);targets.RemoveAt(i);}}}
     void Catch(Target t){caught=t;t.phase=0;PositionCaught();hook.SetAsLastSibling();grip=1;warning=false;lastTap=Time.time;hookState=t.def.Heavy?HookState.Fighting:HookState.Reeling;t.rect.SetAsLastSibling();hook.SetAsLastSibling();gripBar.gameObject.SetActive(t.def.Heavy);hintText.text=t.def.Heavy?"HIZLI HIZLI DOKUN!":"AVIN YUKARI GELİYOR";Notify(t.def.Heavy?"ÇEK! ÇEK! ÇEK!":"YAKALADIN!",cream,1.2f,1,null);PlayWaterEffect();}
-    void Escape(){var t=caught;caught=null;t.rect.localRotation=Quaternion.identity;t.escaped=true;t.speed=Mathf.Sign(t.speed==0?1:t.speed)*260;t.ttl=2;hookState=HookState.Reeling;gripBar.gameObject.SetActive(false);Notify("KAÇTI!",new Color(1,.5f,.3f),1.8f,2,"escaped");hintText.text="BOŞ OLTAYI ÇEK";}
+    void Escape(){var t=caught;caught=null;t.rect.localRotation=Quaternion.identity;t.escaped=true;t.speed=t.def.id=="chest"?0:Mathf.Sign(t.speed==0?1:t.speed)*260;t.ttl=t.def.id=="chest"?1000:2;hookState=HookState.Reeling;gripBar.gameObject.SetActive(false);Notify("KAÇTI!",new Color(1,.5f,.3f),1.8f,2,"escaped");hintText.text="BOŞ OLTAYI ÇEK";}
     void Land(){if(caught!=null){var d=caught.def;int value=Mathf.RoundToInt(d.value*caught.scale);float reward=value<=0?0:Mathf.Max(1,value/45f);float added=FishingRules.RewardTime(seconds,reward)-seconds;seconds+=added;coins+=value;score+=value;if(caught.map)schedule.Collect();
+            if(d.id=="chest"){pendingCoinDisplay+=value;StartCoroutine(ChestCoins(value,new Vector2(hookX,-DockY-15),runId));}
             StartCoroutine(RewardFloat("+"+value+"   +"+added.ToString("0.#")+" SN",new Vector2(hookX,DockY+50)));
             if(!newRecord&&score>best){newRecord=true;Notify("YENİ REKOR!",gold,2,3,"record");}
             else Notify(d.id=="can"?"TENEKE ÇIKTI!":d.id=="sock"?"BU DA NE?":d.id=="shoe"?"TEKİ NEREDE?":d.id=="bag"?"ÇÖP ÇIKTI!":d.Heavy?"BÜYÜK VURGUN!":"GÜZEL AV!",gold,1.7f,1,d.Heavy?"big":"reward");
@@ -311,15 +340,53 @@ public sealed class FishingGame : MonoBehaviour {
         Vector2 end=world.InverseTransformPoint(hook.TransformPoint(new Vector3(8,18,0)));
         Vector2 delta=end-tip;line.anchoredPosition=(tip+end)*.5f;line.sizeDelta=new Vector2(1.7f,delta.magnitude);line.localRotation=Quaternion.Euler(0,0,Mathf.Atan2(delta.y,delta.x)*Mathf.Rad2Deg-90);
         if(caught!=null&&caught.def.Heavy){gripBar.anchoredPosition=new Vector2(Mathf.Clamp(hookX,140,width-140),-Mathf.Clamp(hookY-75,340,1020));gripFill.sizeDelta=new Vector2(205*grip,12);gripFill.GetComponent<Image>().color=grip<.3f?new Color(1,.25f,.12f):new Color(.2f,1,.7f);}}
-    void UpdateHud(){int s=Mathf.CeilToInt(seconds);timerText.text=$"{s/60:00}:{s%60:00}";timerText.color=seconds<=10?Color.Lerp(cream,new Color(1,.25f,.12f),.5f+.5f*Mathf.Sin(Time.time*8)):cream;coinText.text="SKOR "+score;scoreText.text=score>=runTarget?"YENİ REKOR!":"HEDEF "+runTarget;recordText.text="REKOR "+best;}
+    void UpdateHud(){int s=Mathf.CeilToInt(seconds);timerText.text=$"{s/60:00}:{s%60:00}";timerText.color=seconds<=10?Color.Lerp(cream,new Color(1,.25f,.12f),.5f+.5f*Mathf.Sin(Time.time*8)):cream;coinText.text="SKOR "+Mathf.Max(0,score-pendingCoinDisplay);scoreText.text=score>=runTarget?"YENİ REKOR!":"HEDEF "+runTarget;recordText.text="REKOR "+best;}
 
     void Notify(string text,Color color,float duration,int priority,string audio=null){if(Time.time<toastUntil&&priority<toastPriority)return;toastPriority=priority;toastStart=Time.time;toastUntil=Time.time+duration;toastText.text=text;toastText.color=color;if(audio!=null)PlayVoice(audio);}
+    void ClearCoinEffects(){runId++;pendingCoinDisplay=0;foreach(var fx in coinEffects)if(fx!=null)Destroy(fx.gameObject);coinEffects.Clear();}
+    IEnumerator ChestCoins(int value,Vector2 origin,int generation){
+        const int count=16;
+        var group=Node("Chest gold burst",hud,0,0,width,height);group.pivot=new Vector2(0,1);coinEffects.Add(group);
+        var sprites=new RectTransform[count];var bursts=new Vector2[count];var arrived=new bool[count];
+        for(int i=0;i<count;i++){
+            var coin=Pic("Gold coin",group,SeaArt.Disc(),0,0,35,35,new Color(.65f,.30f,.025f)).rectTransform;
+            Pic("Golden rim",coin,SeaArt.Disc(),17.5f,16.5f,32,32,new Color(1,.85f,.18f));
+            Pic("Coin face",coin,SeaArt.Disc(),17.5f,17.5f,25,25,new Color(1,.64f,.035f));
+            Label("Coin stamp",coin,"₺",17.5f,17,22,25,19,new Color(1,.94f,.52f));
+            sprites[i]=coin;coin.anchoredPosition=origin;
+            bursts[i]=origin+new Vector2(Random.Range(-140f,140f),Random.Range(55f,170f));
+        }
+        for(float elapsed=0;elapsed<1.8f;){
+            if(generation!=runId)yield break;
+            if(paused){yield return null;continue;}
+            elapsed+=Time.deltaTime;
+            Vector2 end=group.InverseTransformPoint(coinText.rectTransform.position);
+            for(int i=0;i<count;i++){
+                if(arrived[i])continue;
+                float age=elapsed-i*.025f;
+                if(age<0)continue;
+                float flight=Mathf.Clamp01((age-.4f)/.75f);
+                Vector2 p=age<.4f?Vector2.Lerp(origin,bursts[i],1-Mathf.Pow(1-age/.4f,3)):Vector2.Lerp(bursts[i],end,flight*flight);
+                if(age>=.4f)p.x+=Mathf.Sin(flight*Mathf.PI)*(i%2==0?45:-45);
+                sprites[i].anchoredPosition=p;
+                sprites[i].localScale=new Vector3((.35f+.65f*Mathf.Abs(Mathf.Cos(age*12)))*(1-flight*.55f),1-flight*.55f,1);
+                if(flight>=1){arrived[i]=true;sprites[i].gameObject.SetActive(false);pendingCoinDisplay-=value*(i+1)/count-value*i/count;coinPulse=1;UpdateHud();if(i%4==0)Tone(950+i*38,.045f);}
+            }
+            yield return null;
+        }
+        coinEffects.Remove(group);Destroy(group.gameObject);
+    }
     IEnumerator RewardFloat(string text,Vector2 p){var label=Label("Reward",hud,text,p.x,p.y,360,60,29,new Color(.6f,1,.65f));for(float t=0;t<1.4f;t+=Time.deltaTime){if(paused){yield return null;continue;}label.rectTransform.anchoredPosition=new Vector2(Mathf.Lerp(p.x,width/2,t/1.4f),-Mathf.Lerp(p.y,90,t/1.4f));yield return null;}Destroy(label.gameObject);}
-    void EndRun(){playing=false;paused=false;SaveBest();gripBar.gameObject.SetActive(false);ClearOverlay();Scrim();Label("Result title",overlay,"SÜRE DOLDU!",width/2,360,width-30,150,51,gold);Pic("Result treasure",overlay,SeaArt.Whole("chest"),width/2,555,210,158);Label("Result score",overlay,"TOPLAM SKOR\n"+score,width/2,735,width-30,120,42);Label("Best score",overlay,(newRecord?"YENİ REKOR!  •  ":"EN YÜKSEK SKOR  •  ")+best,width/2,845,width-30,60,26,gold);Button("TEKRAR OYNA",overlay,width/2,1010,350,95,StartRun);Button("ANA MENÜ",overlay,width/2,1130,290,75,ShowHome);PlayVoice("end");}
+    void EndRun(){ClearCoinEffects();playing=false;paused=false;SaveBest();gripBar.gameObject.SetActive(false);ClearOverlay();Scrim();Label("Result title",overlay,"SÜRE DOLDU!",width/2,360,width-30,150,51,gold);Pic("Result treasure",overlay,SeaArt.Whole("chest"),width/2,555,210,158);Label("Result score",overlay,"TOPLAM SKOR\n"+score,width/2,735,width-30,120,42);Label("Best score",overlay,(newRecord?"YENİ REKOR!  •  ":"EN YÜKSEK SKOR  •  ")+best,width/2,845,width-30,60,26,gold);Button("TEKRAR OYNA",overlay,width/2,1010,350,95,StartRun);Button("ANA MENÜ",overlay,width/2,1130,290,75,ShowHome);PlayVoice("end");}
     void PlayVoice(string name){if(name=="cast"||name=="pull")return;if(muted||voiceCooldown>0)return;var clip=Resources.Load<AudioClip>("Audio/"+name);if(clip==null)return;voice.Stop();voice.clip=clip;voice.Play();voiceCooldown=.6f;}
     void Tone(float frequency,float duration){if(muted)return;string key=frequency.ToString();if(!clips.TryGetValue(key,out var clip)){int n=(int)(22050*duration);float[] samples=new float[n];for(int i=0;i<n;i++)samples[i]=Mathf.Sin(i*frequency*2*Mathf.PI/22050)*Mathf.Sin(Mathf.PI*i/n)*.18f;clip=AudioClip.Create(key,n,1,22050,false);clip.SetData(samples,0);clips[key]=clip;}effects.PlayOneShot(clip);}
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-    public IEnumerator SmokeTest(){StartRun();yield return null;Press();if(hookState!=HookState.Sinking)throw new Exception("Cast state");Press();if(hookState!=HookState.Reeling)throw new Exception("Reel state");hookY=DockY;Land();
+    public IEnumerator SmokeTest(){StartRun();yield return null;
+        var bedChest=targets.Find(t=>t.def.id=="chest");if(bedChest==null)throw new Exception("Missing initial seabed chest");
+        Vector2 bedPosition=bedChest.rect.anchoredPosition;AnimateTargets(3);
+        if(Vector2.Distance(bedPosition,bedChest.rect.anchoredPosition)>.1f||bedChest.speed!=0)throw new Exception("Chest drifted off seabed");
+        SpawnChest();SpawnChest();if(targets.FindAll(t=>t.def.id=="chest").Count!=2)throw new Exception("Seabed chest cap");
+        Press();if(hookState!=HookState.Sinking)throw new Exception("Cast state");Press();if(hookState!=HookState.Reeling)throw new Exception("Reel state");hookY=DockY;Land();
         foreach(var actor in targets)Destroy(actor.rect.gameObject);targets.Clear();
         foreach(int direction in new[]{-1,1}){wind=direction;SpawnMap();var map=targets[targets.Count-1];
             if(map.x>=-43&&map.x<=width+43)throw new Exception("Map appeared inside screen");
